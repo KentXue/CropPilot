@@ -151,6 +151,17 @@
   <div class="container">
     <h1>🌾 作物生长状态管理与决策支持系统</h1>
     
+    <div class="section" style="margin-top:10px;">
+      <h3>👤 选择用户（演示用）</h3>
+      <div class="form-group">
+        <label>用户：</label>
+        <select id="userSelect">
+          <option value="">全部用户</option>
+        </select>
+        <small style="color:#777;">选择用户后将只显示其地块</small>
+      </div>
+    </div>
+    
     <div class="tabs">
       <button class="tab active" onclick="switchTab('advice')">农事建议</button>
       <button class="tab" onclick="switchTab('sensor')">传感器数据</button>
@@ -160,7 +171,14 @@
     <!-- 农事建议标签页 -->
     <div id="advice-tab" class="tab-content active">
       <div class="section">
-        <h2>📋 第一步：选择作物和生长阶段</h2>
+        <h2>📋 第一步：选择地块 / 作物 / 生长阶段</h2>
+        <div class="form-group">
+          <label>地块：</label>
+          <select id="fieldSelect">
+            <option value="">请选择地块</option>
+          </select>
+          <small style="color:#777;">(推荐) 选择地块后自动带出作物</small>
+        </div>
         <div class="form-group">
           <label>作物类型：</label>
           <select id="cropSelect">
@@ -193,6 +211,12 @@
       <div class="section">
         <h2>📊 录入传感器数据</h2>
         <div class="form-group">
+          <label>地块：</label>
+          <select id="sensorFieldSelect">
+            <option value="">请选择地块</option>
+          </select>
+        </div>
+        <div class="form-group">
           <label>作物类型：</label>
           <select id="sensorCropSelect">
             <option value="水稻">水稻</option>
@@ -206,6 +230,21 @@
             <option value="抽穗期">抽穗期</option>
             <option value="抽穗扬花期">抽穗扬花期</option>
           </select>
+        </div>
+
+        <div class="section" style="background: #fff; border-left-color: #28a745; border: 1px solid #e5e5e5; margin-top: 10px;">
+          <h3>🖼 上传作物图片</h3>
+          <p style="color:#777; margin-bottom:10px;">先选择上方地块，再上传图片（自动保存到系统并记录路径与时间）。</p>
+          <div class="form-group">
+            <label>拍摄时间：</label>
+            <input type="datetime-local" id="capturedAt">
+          </div>
+          <div class="form-group">
+            <label>作物图片：</label>
+            <input type="file" id="cropImageFile" accept="image/*" style="flex:1;">
+            <button onclick="uploadCropImage()" style="margin-left:10px;">上传作物图片</button>
+          </div>
+          <div id="uploadResult"></div>
         </div>
         
         <div class="sensor-grid">
@@ -261,6 +300,12 @@
       <div class="section">
         <h2>📜 查询历史记录</h2>
         <div class="form-group">
+          <label>地块：</label>
+          <select id="historyFieldSelect">
+            <option value="">全部</option>
+          </select>
+        </div>
+        <div class="form-group">
           <label>作物类型：</label>
           <select id="historyCropSelect">
             <option value="">全部</option>
@@ -288,6 +333,76 @@
   </div>
 
   <script>
+    // 简单的缓存
+    let usersCache = [];
+    let fieldsCache = [];
+
+    function loadUsers() {
+      fetch('/api/users')
+        .then(res => res.json())
+        .then(data => {
+          if (data.status !== 'success') return;
+          usersCache = data.users || [];
+          const sel = document.getElementById('userSelect');
+          if (sel) {
+            const firstOption = sel.options[0];
+            sel.innerHTML = '';
+            sel.appendChild(firstOption);
+            usersCache.forEach(u => {
+              const opt = document.createElement('option');
+              opt.value = u.id;
+              opt.textContent = `${u.username} (${u.role})`;
+              sel.appendChild(opt);
+            });
+            // 默认选中第一个用户并加载其地块
+            if (usersCache.length > 0) {
+              sel.value = usersCache[0].id;
+              loadFields(usersCache[0].id);
+            } else {
+              loadFields();
+            }
+          }
+        })
+        .catch(err => console.error('加载用户失败', err));
+    }
+
+    function loadFields(userId) {
+      let url = '/api/fields';
+      if (userId) {
+        const params = new URLSearchParams();
+        params.append('user_id', userId);
+        url += `?${params.toString()}`;
+      }
+      fetch(url)
+        .then(res => res.json())
+        .then(data => {
+          if (data.status !== 'success') return;
+          fieldsCache = data.fields || [];
+          const fieldSelectIds = ['fieldSelect', 'sensorFieldSelect', 'historyFieldSelect'];
+          fieldSelectIds.forEach(id => {
+            const sel = document.getElementById(id);
+            if (!sel) return;
+            // 先保留第一个占位项
+            const firstOption = sel.options[0];
+            sel.innerHTML = '';
+            sel.appendChild(firstOption);
+            // 如果切换用户，则重置选中项为空
+            sel.value = '';
+            fieldsCache.forEach(f => {
+              const opt = document.createElement('option');
+              opt.value = f.id;
+              opt.textContent = `${f.name} (${f.crop_type})`;
+              sel.appendChild(opt);
+            });
+          });
+        })
+        .catch(err => console.error('加载地块失败', err));
+    }
+
+    function getFieldById(fieldId) {
+      return fieldsCache.find(f => String(f.id) === String(fieldId));
+    }
+
     function switchTab(tabName) {
       // 隐藏所有标签页内容
       document.querySelectorAll('.tab-content').forEach(tab => {
@@ -304,12 +419,18 @@
     }
 
     function getAdvice() {
+      const fieldId = document.getElementById('fieldSelect').value;
       const crop = document.getElementById('cropSelect').value;
       const stage = document.getElementById('stageSelect').value;
       
       document.getElementById('adviceResult').innerHTML = '<p>正在加载...</p>';
+
+      const params = new URLSearchParams();
+      if (fieldId) params.append('field_id', fieldId);
+      params.append('crop', crop);
+      params.append('stage', stage);
       
-      fetch(`/api/get_advice?crop=${encodeURIComponent(crop)}&stage=${encodeURIComponent(stage)}`)
+      fetch(`/api/get_advice?${params.toString()}`)
         .then(response => response.json())
         .then(data => {
           if (data.status === 'success') {
@@ -332,8 +453,60 @@
         });
     }
 
+    function uploadCropImage() {
+      const fieldId = document.getElementById('sensorFieldSelect').value;
+      const uploadResult = document.getElementById('uploadResult');
+      const fileInput = document.getElementById('cropImageFile');
+      const capturedAt = document.getElementById('capturedAt').value;
+
+      if (!fieldId) {
+        uploadResult.innerHTML = '<div class="error">请先选择地块</div>';
+        return;
+      }
+
+      if (!fileInput || fileInput.files.length === 0) {
+        uploadResult.innerHTML = '<div class="error">请先选择要上传的图片</div>';
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append('field_id', fieldId);
+      formData.append('image', fileInput.files[0]);
+      if (capturedAt) {
+        formData.append('captured_at', capturedAt);
+      }
+
+      uploadResult.innerHTML = '<p>正在上传...</p>';
+
+      fetch('/api/upload_crop_image', {
+        method: 'POST',
+        body: formData
+      })
+        .then(response => response.json())
+        .then(data => {
+          if (data.status === 'success') {
+            const link = data.image_path ? `<a href="${data.image_path}" target="_blank">查看图片</a>` : '';
+            uploadResult.innerHTML = `<div class="success">上传成功！${link}</div>`;
+            fileInput.value = '';
+          } else {
+            uploadResult.innerHTML = `<div class="error">上传失败：${data.message || '未知错误'}</div>`;
+          }
+        })
+        .catch(error => {
+          console.error('错误:', error);
+          uploadResult.innerHTML = '<div class="error">上传失败，请检查网络或重试。</div>';
+        });
+    }
+
     function saveSensorData() {
+      const fieldId = document.getElementById('sensorFieldSelect').value;
+      if (!fieldId) {
+        document.getElementById('sensorResult').innerHTML = '<div class="error">请先选择地块</div>';
+        return;
+      }
+
       const data = {
+        field_id: parseInt(fieldId),
         crop_type: document.getElementById('sensorCropSelect').value,
         growth_stage: document.getElementById('sensorStageSelect').value,
         temperature: document.getElementById('temperature').value || null,
@@ -372,30 +545,19 @@
     }
 
     function getAdviceWithSensor() {
-      const crop = document.getElementById('sensorCropSelect').value;
-      const stage = document.getElementById('sensorStageSelect').value;
-      
-      const sensorValues = {
-        temperature: document.getElementById('temperature').value || null,
-        humidity: document.getElementById('humidity').value || null,
-        soil_moisture: document.getElementById('soilMoisture').value || null,
-        light_intensity: document.getElementById('lightIntensity').value || null,
-        ph_value: document.getElementById('phValue').value || null
-      };
-
-      // 先保存数据，然后获取建议
+      // 先保存数据，然后直接获取当前作物+阶段的建议
       saveSensorData();
-      
-      // 获取建议（可以传递传感器数据作为参数）
       getAdvice();
     }
 
     function loadHistory() {
+      const fieldId = document.getElementById('historyFieldSelect').value;
       const crop = document.getElementById('historyCropSelect').value;
       const stage = document.getElementById('historyStageSelect').value;
       
       let url = '/api/get_history';
       const params = new URLSearchParams();
+      if (fieldId) params.append('field_id', fieldId);
       if (crop) params.append('crop', crop);
       if (stage) params.append('stage', stage);
       if (params.toString()) url += '?' + params.toString();
@@ -430,6 +592,30 @@
             '<div class="error">请求失败</div>';
         });
     }
+
+    // 选地块时自动带出作物类型
+    document.addEventListener('change', (e) => {
+      if (e.target.id === 'userSelect') {
+        const userId = e.target.value;
+        loadFields(userId);
+        return;
+      }
+      if (e.target.id === 'fieldSelect' || e.target.id === 'sensorFieldSelect') {
+        const fieldId = e.target.value;
+        const field = getFieldById(fieldId);
+        if (field) {
+          if (e.target.id === 'fieldSelect') {
+            document.getElementById('cropSelect').value = field.crop_type;
+          }
+          if (e.target.id === 'sensorFieldSelect') {
+            document.getElementById('sensorCropSelect').value = field.crop_type;
+          }
+        }
+      }
+    });
+
+    // 页面加载时先拉取用户，再加载地块
+    window.addEventListener('DOMContentLoaded', loadUsers);
   </script>
 </body>
 </html>

@@ -5,10 +5,29 @@ SET NAMES utf8mb4;
 
 USE `crop_pilot_db`;
 
--- 清空现有数据（可选，用于重置）
--- TRUNCATE TABLE knowledge_rules;
+-- =========================
+-- 基础演示数据（用户 & 地块）
+-- =========================
 
+-- 可选：清空基础表数据（谨慎使用）
+-- TRUNCATE TABLE decision_records;
+-- TRUNCATE TABLE sensor_data;
+-- TRUNCATE TABLE fields;
+-- TRUNCATE TABLE users;
+
+-- 插入示例用户（演示环境可用，实际项目请改为真正的密码哈希）
+INSERT INTO users (username, password_hash, role, phone) VALUES
+('admin', 'admin123', 'admin', '13800000000'),
+('farmer_zhang', 'farmer123', 'farmer', '13900000000');
+
+-- 插入示例地块（张三农户拥有两块地）
+INSERT INTO fields (user_id, name, location, area, crop_type, soil_type) VALUES
+((SELECT id FROM users WHERE username = 'farmer_zhang'), '张三水稻田1号', '湖北省某县A区', 12.50, '水稻', '壤土'),
+((SELECT id FROM users WHERE username = 'farmer_zhang'), '张三玉米田1号', '湖北省某县B区', 8.30, '玉米', '沙壤土');
+
+-- =========================
 -- 插入知识规则数据
+-- =========================
 INSERT INTO knowledge_rules (crop_type, growth_stage, rule_type, action, priority) VALUES
 -- 水稻规则
 ('水稻', '分蘖期', '施肥建议', '每亩追施尿素5-8公斤，促进分蘖。', 10),

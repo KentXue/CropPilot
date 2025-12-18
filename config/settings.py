@@ -7,8 +7,12 @@ from dotenv import load_dotenv
 # 加载环境变量
 load_dotenv()
 
+# 项目根目录
+BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+
 class Config:
     """基础配置类"""
+    BASE_DIR = BASE_DIR
     # 数据库配置
     DB_HOST = os.getenv('DB_HOST', 'localhost')
     DB_USER = os.getenv('DB_USER', 'root')
@@ -19,6 +23,11 @@ class Config:
     # Flask配置
     SECRET_KEY = os.getenv('SECRET_KEY', 'dev-secret-key-change-in-production')
     DEBUG = os.getenv('FLASK_DEBUG', 'True').lower() == 'true'
+    UPLOAD_FOLDER = os.getenv(
+        'UPLOAD_FOLDER',
+        os.path.join(BASE_DIR, 'static', 'uploads')
+    )
+    MAX_CONTENT_LENGTH = int(os.getenv('MAX_CONTENT_LENGTH', 16 * 1024 * 1024))
     
     # API配置（如果将来需要调用外部API）
     SENSECAP_API_KEY = os.getenv('SENSECAP_API_KEY', '')

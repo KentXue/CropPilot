@@ -1,6 +1,6 @@
 # 作物生长状态管理与决策支持系统 (CropPilot)
 
-一个基于Flask的智能农业决策支持系统，帮助农民根据作物类型和生长阶段获取专业的农事建议。
+一个基于Flask的智能农业决策支持系统，围绕“用户-地块-作物”管理，帮助农民根据地块的作物和生长阶段获取农事建议，记录传感器数据与决策历史。
 
 ## 功能特性
 
@@ -26,8 +26,8 @@ CropPilot/
 │   └── knowledge_base.py        # 知识库（备用数据源/缓存）
 │
 ├── sql/                         # SQL脚本目录
-│   ├── schema.sql               # 数据库表结构定义
-│   └── seed_data.sql            # 初始数据（知识库规则）
+│   ├── schema.sql               # 数据库表结构定义（含 users/fields 等）
+│   └── seed_data.sql            # 初始数据（用户/地块/知识规则）
 │
 ├── static/                      # Flask静态文件目录
 │   ├── css/                     # 样式表（预留）
@@ -66,7 +66,7 @@ pip install -r requirements.txt
 mysql -u root -p < sql/schema.sql
 ```
 
-2. 导入初始数据：
+2. 导入初始数据（包含示例用户、地块、规则）：
 ```bash
 mysql -u root -p crop_pilot_db < sql/seed_data.sql
 ```
@@ -107,22 +107,35 @@ python src/app.py
 
 ### 快速示例
 
-**获取农事建议：**
+**获取农事建议（推荐按地块）：**
 ```
-GET /api/get_advice?crop=水稻&stage=分蘖期
+GET /api/get_advice?field_id=1&stage=拔节期
 ```
 
-**响应示例：**
+**保存传感器数据（必须带 field_id）：**
 ```json
+POST /api/save_sensor_data
 {
-    "crop": "水稻",
-    "stage": "分蘖期",
-    "advice": [
-        "施肥建议: 每亩追施尿素5-8公斤，促进分蘖。",
-        "灌溉建议: 保持浅水层3-5cm，促进分蘖。"
-    ],
-    "status": "success"
+  "field_id": 1,
+  "growth_stage": "分蘖期",
+  "temperature": 25.5,
+  "humidity": 65.0
 }
+```
+
+**上传作物图片：**
+```
+POST /api/upload_crop_image
+FormData:
+- field_id: 1
+- image: <选择图片文件>
+- captured_at: 2024-05-01T08:30 (可选，拍摄时间)
+```
+
+**获取地块 / 用户（演示用）：**
+```
+GET /api/users
+GET /api/fields?user_id=2
 ```
 
 ## 数据库设计
@@ -131,9 +144,11 @@ GET /api/get_advice?crop=水稻&stage=分蘖期
 
 ### 主要数据表
 
-- **knowledge_rules**: 知识规则表，存储不同作物和生长阶段的农事建议规则
-- **sensor_data**: 传感器数据表，存储传感器监测的环境数据
-- **decision_records**: 决策记录表，记录系统给出的建议和用户反馈
+- **users**: 用户表（角色 farmer/admin/expert）
+- **fields**: 农田/地块表（挂在用户下，一块地一种作物）
+- **knowledge_rules**: 知识规则表，按作物+生长阶段
+- **sensor_data**: 传感器数据表（关联地块，冗余作物/阶段便于查询）
+- **decision_records**: 决策记录表（关联地块，可选关联一条传感器数据）
 
 ## 开发计划
 
