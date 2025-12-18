@@ -1,0 +1,156 @@
+# 作物生长状态管理与决策支持系统 (CropPilot)
+
+一个基于Flask的智能农业决策支持系统，帮助农民根据作物类型和生长阶段获取专业的农事建议。
+
+## 功能特性
+
+- 🌾 **多作物支持**: 支持水稻、玉米等多种作物
+- 📊 **生长阶段管理**: 根据不同生长阶段提供针对性建议
+- 💡 **智能决策**: 基于知识库和数据库规则提供农事建议
+- 📈 **传感器数据支持**: 可记录和查询传感器监测数据
+- 🔄 **决策记录**: 记录历史决策和用户反馈
+
+## 项目结构
+
+```
+CropPilot/
+├── README.md                    # 项目总说明
+├── requirements.txt             # Python依赖包清单
+├── .gitignore                   # Git忽略文件
+├── env.example                  # 环境变量配置示例
+│
+├── src/                         # 源代码目录
+│   ├── app.py                   # Flask应用主文件
+│   ├── database.py              # 数据库连接和配置
+│   ├── decision_engine.py       # 决策引擎核心逻辑
+│   └── knowledge_base.py        # 知识库（备用数据源/缓存）
+│
+├── sql/                         # SQL脚本目录
+│   ├── schema.sql               # 数据库表结构定义
+│   └── seed_data.sql            # 初始数据（知识库规则）
+│
+├── static/                      # Flask静态文件目录
+│   ├── css/                     # 样式表（预留）
+│   ├── js/                      # JavaScript文件（预留）
+│   └── images/                  # 图片资源（预留）
+│
+├── templates/                   # Flask模板目录
+│   └── index.html               # 主页面模板
+│
+├── config/                      # 配置目录
+│   └── settings.py              # 配置文件（支持环境变量）
+│
+└── docs/                        # 项目文档
+    ├── api.md                   # API接口文档
+    ├── database.md              # 数据库设计文档
+    └── deployment.md            # 部署指南
+```
+
+## 安装步骤
+
+### 1. 环境要求
+
+- Python 3.7+
+- MySQL 5.7+ 或 MariaDB 10.2+
+
+### 2. 安装依赖
+
+```bash
+pip install -r requirements.txt
+```
+
+### 3. 数据库配置
+
+1. 创建数据库和表结构：
+```bash
+mysql -u root -p < sql/schema.sql
+```
+
+2. 导入初始数据：
+```bash
+mysql -u root -p crop_pilot_db < sql/seed_data.sql
+```
+
+3. 配置环境变量：
+
+复制 `env.example` 为 `.env` 并修改配置：
+```bash
+# Windows
+copy env.example .env
+
+# Linux/Mac
+cp env.example .env
+```
+
+编辑 `.env` 文件，设置数据库连接信息：
+```env
+DB_HOST=localhost
+DB_USER=root
+DB_PASSWORD=your_password
+DB_NAME=crop_pilot_db
+```
+
+### 4. 运行应用
+
+从项目根目录运行：
+```bash
+python src/app.py
+```
+
+应用将在 `http://127.0.0.1:5000` 启动。
+
+> **提示**: 详细部署说明请参考 [docs/deployment.md](docs/deployment.md)
+
+## API接口
+
+详细的API文档请参考 [docs/api.md](docs/api.md)
+
+### 快速示例
+
+**获取农事建议：**
+```
+GET /api/get_advice?crop=水稻&stage=分蘖期
+```
+
+**响应示例：**
+```json
+{
+    "crop": "水稻",
+    "stage": "分蘖期",
+    "advice": [
+        "施肥建议: 每亩追施尿素5-8公斤，促进分蘖。",
+        "灌溉建议: 保持浅水层3-5cm，促进分蘖。"
+    ],
+    "status": "success"
+}
+```
+
+## 数据库设计
+
+详细的数据库设计文档请参考 [docs/database.md](docs/database.md)
+
+### 主要数据表
+
+- **knowledge_rules**: 知识规则表，存储不同作物和生长阶段的农事建议规则
+- **sensor_data**: 传感器数据表，存储传感器监测的环境数据
+- **decision_records**: 决策记录表，记录系统给出的建议和用户反馈
+
+## 开发计划
+
+- [x] 基础决策引擎
+- [x] 知识库系统
+- [x] 数据库支持
+- [ ] 传感器数据输入界面
+- [ ] 数据可视化图表
+- [ ] 历史记录查询
+- [ ] 用户反馈系统
+- [ ] 数据导出功能
+
+## 贡献
+
+欢迎提交Issue和Pull Request！
+
+## 许可证
+
+MIT License
+

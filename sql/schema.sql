@@ -1,0 +1,65 @@
+-- 作物生长状态管理与决策支持系统数据库表结构
+-- 设置数据库默认编码
+SET NAMES utf8mb4;
+SET FOREIGN_KEY_CHECKS = 0;
+
+-- 创建数据库（如果不存在）
+CREATE DATABASE IF NOT EXISTS `crop_pilot_db` 
+CHARACTER SET = `utf8mb4`
+COLLATE = `utf8mb4_unicode_ci`;
+
+USE `crop_pilot_db`;
+
+-- 知识规则表
+CREATE TABLE IF NOT EXISTS knowledge_rules (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    crop_type VARCHAR(50) NOT NULL COMMENT '作物类型',
+    growth_stage VARCHAR(50) NOT NULL COMMENT '生长阶段',
+    rule_type VARCHAR(50) NOT NULL COMMENT '规则类型（施肥建议、灌溉建议等）',
+    action TEXT NOT NULL COMMENT '具体建议内容',
+    conditions JSON COMMENT '触发条件（JSON格式，如温度、湿度等阈值）',
+    priority INT DEFAULT 0 COMMENT '优先级，数字越大优先级越高',
+    is_active BOOLEAN DEFAULT TRUE COMMENT '是否启用',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_crop_stage (crop_type, growth_stage),
+    INDEX idx_active (is_active)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='知识规则表';
+
+-- 传感器数据表
+CREATE TABLE IF NOT EXISTS sensor_data (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    crop_type VARCHAR(50) NOT NULL COMMENT '作物类型',
+    growth_stage VARCHAR(50) NOT NULL COMMENT '生长阶段',
+    temperature DECIMAL(5,2) COMMENT '温度（摄氏度）',
+    humidity DECIMAL(5,2) COMMENT '湿度（%）',
+    soil_moisture DECIMAL(5,2) COMMENT '土壤湿度（%）',
+    light_intensity DECIMAL(8,2) COMMENT '光照强度（lux）',
+    ph_value DECIMAL(4,2) COMMENT '土壤pH值',
+    nitrogen DECIMAL(6,2) COMMENT '氮含量（mg/kg）',
+    phosphorus DECIMAL(6,2) COMMENT '磷含量（mg/kg）',
+    potassium DECIMAL(6,2) COMMENT '钾含量（mg/kg）',
+    location VARCHAR(100) COMMENT '位置/地块编号',
+    recorded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '记录时间',
+    INDEX idx_crop_stage (crop_type, growth_stage),
+    INDEX idx_recorded_at (recorded_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='传感器数据表';
+
+-- 决策记录表
+CREATE TABLE IF NOT EXISTS decision_records (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    crop_type VARCHAR(50) NOT NULL COMMENT '作物类型',
+    growth_stage VARCHAR(50) NOT NULL COMMENT '生长阶段',
+    sensor_data_id INT COMMENT '关联的传感器数据ID',
+    advice TEXT NOT NULL COMMENT '系统给出的建议',
+    user_action TEXT COMMENT '用户采取的实际行动',
+    feedback_score INT COMMENT '用户反馈评分（1-5）',
+    feedback_comment TEXT COMMENT '用户反馈意见',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_crop_stage (crop_type, growth_stage),
+    INDEX idx_created_at (created_at),
+    FOREIGN KEY (sensor_data_id) REFERENCES sensor_data(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='决策记录表';
+
+SET FOREIGN_KEY_CHECKS = 1;
+

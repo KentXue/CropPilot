@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>作物生长状态管理与决策支持系统</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: 'Microsoft YaHei', Arial, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 20px;
+    }
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+      padding: 30px;
+    }
+    h1 {
+      color: #333;
+      text-align: center;
+      margin-bottom: 30px;
+      font-size: 28px;
+    }
+    h2, h3 {
+      color: #555;
+      margin: 20px 0 15px 0;
+    }
+    .section {
+      margin-bottom: 30px;
+      padding: 20px;
+      background: #f8f9fa;
+      border-radius: 8px;
+      border-left: 4px solid #667eea;
+    }
+    .form-group {
+      margin-bottom: 15px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    label {
+      min-width: 100px;
+      font-weight: bold;
+      color: #333;
+    }
+    select, input {
+      padding: 8px 12px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 14px;
+      flex: 1;
+    }
+    button {
+      background: #667eea;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 14px;
+      transition: background 0.3s;
+    }
+    button:hover {
+      background: #5568d3;
+    }
+    button:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+    }
+    .result-box {
+      border: 2px solid #667eea;
+      padding: 20px;
+      border-radius: 8px;
+      background: white;
+      min-height: 100px;
+      margin-top: 15px;
+    }
+    .advice-item {
+      padding: 10px;
+      margin: 8px 0;
+      background: #e8f4f8;
+      border-left: 3px solid #667eea;
+      border-radius: 4px;
+    }
+    .sensor-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 15px;
+      margin-top: 15px;
+    }
+    .sensor-input {
+      display: flex;
+      flex-direction: column;
+    }
+    .sensor-input label {
+      min-width: auto;
+      margin-bottom: 5px;
+      font-size: 13px;
+    }
+    .tabs {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+      border-bottom: 2px solid #ddd;
+    }
+    .tab {
+      padding: 10px 20px;
+      cursor: pointer;
+      background: none;
+      border: none;
+      color: #666;
+      font-size: 16px;
+      border-bottom: 3px solid transparent;
+    }
+    .tab.active {
+      color: #667eea;
+      border-bottom-color: #667eea;
+    }
+    .tab-content {
+      display: none;
+    }
+    .tab-content.active {
+      display: block;
+    }
+    .error {
+      color: #d32f2f;
+      background: #ffebee;
+      padding: 10px;
+      border-radius: 4px;
+      margin-top: 10px;
+    }
+    .success {
+      color: #2e7d32;
+      background: #e8f5e9;
+      padding: 10px;
+      border-radius: 4px;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🌾 作物生长状态管理与决策支持系统</h1>
+    
+    <div class="tabs">
+      <button class="tab active" onclick="switchTab('advice')">农事建议</button>
+      <button class="tab" onclick="switchTab('sensor')">传感器数据</button>
+      <button class="tab" onclick="switchTab('history')">历史记录</button>
+    </div>
+
+    <!-- 农事建议标签页 -->
+    <div id="advice-tab" class="tab-content active">
+      <div class="section">
+        <h2>📋 第一步：选择作物和生长阶段</h2>
+        <div class="form-group">
+          <label>作物类型：</label>
+          <select id="cropSelect">
+            <option value="水稻">水稻</option>
+            <option value="玉米">玉米</option>
+          </select>
+          
+          <label>生长阶段：</label>
+          <select id="stageSelect">
+            <option value="分蘖期">分蘖期</option>
+            <option value="拔节期">拔节期</option>
+            <option value="抽穗期">抽穗期</option>
+            <option value="抽穗扬花期">抽穗扬花期</option>
+          </select>
+          
+          <button onclick="getAdvice()">获取农事建议</button>
+        </div>
+      </div>
+      
+      <div class="section">
+        <h3>💡 系统建议</h3>
+        <div id="adviceResult" class="result-box">
+          <p style="color: #999;">建议将显示在这里...</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- 传感器数据标签页 -->
+    <div id="sensor-tab" class="tab-content">
+      <div class="section">
+        <h2>📊 录入传感器数据</h2>
+        <div class="form-group">
+          <label>作物类型：</label>
+          <select id="sensorCropSelect">
+            <option value="水稻">水稻</option>
+            <option value="玉米">玉米</option>
+          </select>
+          
+          <label>生长阶段：</label>
+          <select id="sensorStageSelect">
+            <option value="分蘖期">分蘖期</option>
+            <option value="拔节期">拔节期</option>
+            <option value="抽穗期">抽穗期</option>
+            <option value="抽穗扬花期">抽穗扬花期</option>
+          </select>
+        </div>
+        
+        <div class="sensor-grid">
+          <div class="sensor-input">
+            <label>温度 (°C):</label>
+            <input type="number" id="temperature" step="0.1" placeholder="例如: 25.5">
+          </div>
+          <div class="sensor-input">
+            <label>湿度 (%):</label>
+            <input type="number" id="humidity" step="0.1" placeholder="例如: 65.0">
+          </div>
+          <div class="sensor-input">
+            <label>土壤湿度 (%):</label>
+            <input type="number" id="soilMoisture" step="0.1" placeholder="例如: 70.0">
+          </div>
+          <div class="sensor-input">
+            <label>光照强度 (lux):</label>
+            <input type="number" id="lightIntensity" step="0.1" placeholder="例如: 50000">
+          </div>
+          <div class="sensor-input">
+            <label>pH值:</label>
+            <input type="number" id="phValue" step="0.1" placeholder="例如: 6.5">
+          </div>
+          <div class="sensor-input">
+            <label>氮含量 (mg/kg):</label>
+            <input type="number" id="nitrogen" step="0.1" placeholder="例如: 150.0">
+          </div>
+          <div class="sensor-input">
+            <label>磷含量 (mg/kg):</label>
+            <input type="number" id="phosphorus" step="0.1" placeholder="例如: 80.0">
+          </div>
+          <div class="sensor-input">
+            <label>钾含量 (mg/kg):</label>
+            <input type="number" id="potassium" step="0.1" placeholder="例如: 120.0">
+          </div>
+          <div class="sensor-input">
+            <label>位置/地块:</label>
+            <input type="text" id="location" placeholder="例如: A区-1号田">
+          </div>
+        </div>
+        
+        <div style="margin-top: 20px;">
+          <button onclick="saveSensorData()">保存传感器数据</button>
+          <button onclick="getAdviceWithSensor()" style="background: #28a745; margin-left: 10px;">基于数据获取建议</button>
+        </div>
+        
+        <div id="sensorResult"></div>
+      </div>
+    </div>
+
+    <!-- 历史记录标签页 -->
+    <div id="history-tab" class="tab-content">
+      <div class="section">
+        <h2>📜 查询历史记录</h2>
+        <div class="form-group">
+          <label>作物类型：</label>
+          <select id="historyCropSelect">
+            <option value="">全部</option>
+            <option value="水稻">水稻</option>
+            <option value="玉米">玉米</option>
+          </select>
+          
+          <label>生长阶段：</label>
+          <select id="historyStageSelect">
+            <option value="">全部</option>
+            <option value="分蘖期">分蘖期</option>
+            <option value="拔节期">拔节期</option>
+            <option value="抽穗期">抽穗期</option>
+            <option value="抽穗扬花期">抽穗扬花期</option>
+          </select>
+          
+          <button onclick="loadHistory()">查询历史</button>
+        </div>
+        
+        <div id="historyResult" class="result-box">
+          <p style="color: #999;">历史记录将显示在这里...</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function switchTab(tabName) {
+      // 隐藏所有标签页内容
+      document.querySelectorAll('.tab-content').forEach(tab => {
+        tab.classList.remove('active');
+      });
+      // 移除所有标签按钮的active类
+      document.querySelectorAll('.tab').forEach(btn => {
+        btn.classList.remove('active');
+      });
+      // 显示选中的标签页
+      document.getElementById(tabName + '-tab').classList.add('active');
+      // 激活对应的标签按钮
+      event.target.classList.add('active');
+    }
+
+    function getAdvice() {
+      const crop = document.getElementById('cropSelect').value;
+      const stage = document.getElementById('stageSelect').value;
+      
+      document.getElementById('adviceResult').innerHTML = '<p>正在加载...</p>';
+      
+      fetch(`/api/get_advice?crop=${encodeURIComponent(crop)}&stage=${encodeURIComponent(stage)}`)
+        .then(response => response.json())
+        .then(data => {
+          if (data.status === 'success') {
+            let html = `<p style="font-size: 18px; margin-bottom: 15px;"><strong>${data.crop} - ${data.stage}</strong></p>`;
+            if (data.advice && data.advice.length > 0) {
+              data.advice.forEach(item => {
+                html += `<div class="advice-item">${item}</div>`;
+              });
+            } else {
+              html += '<p>暂无建议</p>';
+            }
+            document.getElementById('adviceResult').innerHTML = html;
+          } else {
+            document.getElementById('adviceResult').innerHTML = '<div class="error">获取建议失败</div>';
+          }
+        })
+        .catch(error => {
+          console.error('错误:', error);
+          document.getElementById('adviceResult').innerHTML = '<div class="error">请求失败，请确保后端服务已启动。</div>';
+        });
+    }
+
+    function saveSensorData() {
+      const data = {
+        crop_type: document.getElementById('sensorCropSelect').value,
+        growth_stage: document.getElementById('sensorStageSelect').value,
+        temperature: document.getElementById('temperature').value || null,
+        humidity: document.getElementById('humidity').value || null,
+        soil_moisture: document.getElementById('soilMoisture').value || null,
+        light_intensity: document.getElementById('lightIntensity').value || null,
+        ph_value: document.getElementById('phValue').value || null,
+        nitrogen: document.getElementById('nitrogen').value || null,
+        phosphorus: document.getElementById('phosphorus').value || null,
+        potassium: document.getElementById('potassium').value || null,
+        location: document.getElementById('location').value || null
+      };
+
+      fetch('/api/save_sensor_data', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(data)
+      })
+        .then(response => response.json())
+        .then(result => {
+          if (result.status === 'success') {
+            document.getElementById('sensorResult').innerHTML = 
+              '<div class="success">传感器数据保存成功！ID: ' + result.data_id + '</div>';
+          } else {
+            document.getElementById('sensorResult').innerHTML = 
+              '<div class="error">保存失败: ' + (result.message || '未知错误') + '</div>';
+          }
+        })
+        .catch(error => {
+          console.error('错误:', error);
+          document.getElementById('sensorResult').innerHTML = 
+            '<div class="error">请求失败，请检查网络连接。</div>';
+        });
+    }
+
+    function getAdviceWithSensor() {
+      const crop = document.getElementById('sensorCropSelect').value;
+      const stage = document.getElementById('sensorStageSelect').value;
+      
+      const sensorValues = {
+        temperature: document.getElementById('temperature').value || null,
+        humidity: document.getElementById('humidity').value || null,
+        soil_moisture: document.getElementById('soilMoisture').value || null,
+        light_intensity: document.getElementById('lightIntensity').value || null,
+        ph_value: document.getElementById('phValue').value || null
+      };
+
+      // 先保存数据，然后获取建议
+      saveSensorData();
+      
+      // 获取建议（可以传递传感器数据作为参数）
+      getAdvice();
+    }
+
+    function loadHistory() {
+      const crop = document.getElementById('historyCropSelect').value;
+      const stage = document.getElementById('historyStageSelect').value;
+      
+      let url = '/api/get_history';
+      const params = new URLSearchParams();
+      if (crop) params.append('crop', crop);
+      if (stage) params.append('stage', stage);
+      if (params.toString()) url += '?' + params.toString();
+      
+      document.getElementById('historyResult').innerHTML = '<p>正在加载...</p>';
+      
+      fetch(url)
+        .then(response => response.json())
+        .then(data => {
+          if (data.status === 'success') {
+            let html = '<h3>决策记录 (' + data.count + ' 条)</h3>';
+            if (data.records && data.records.length > 0) {
+              data.records.forEach(record => {
+                html += `<div class="advice-item" style="margin-bottom: 15px;">`;
+                html += `<p><strong>${record.crop_type} - ${record.growth_stage}</strong></p>`;
+                html += `<p>${record.advice}</p>`;
+                html += `<p style="color: #999; font-size: 12px;">${record.created_at}</p>`;
+                html += `</div>`;
+              });
+            } else {
+              html += '<p>暂无历史记录</p>';
+            }
+            document.getElementById('historyResult').innerHTML = html;
+          } else {
+            document.getElementById('historyResult').innerHTML = 
+              '<div class="error">查询失败</div>';
+          }
+        })
+        .catch(error => {
+          console.error('错误:', error);
+          document.getElementById('historyResult').innerHTML = 
+            '<div class="error">请求失败</div>';
+        });
+    }
+  </script>
+</body>
+</html>
+
