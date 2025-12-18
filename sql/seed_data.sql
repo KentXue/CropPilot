@@ -1,5 +1,7 @@
--- 初始数据：知识库规则
 -- 使用前请确保已执行 schema.sql 创建表结构
+
+-- 确保客户端与文件均使用 utf8mb4 编码
+SET NAMES utf8mb4;
 
 USE `crop_pilot_db`;
 
