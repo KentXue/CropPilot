@@ -1,6 +1,6 @@
 # 文件：app.py
 from flask import Flask, request, jsonify, render_template
-from decision_engine import get_suggestions
+from decision_engine import get_suggestions, get_smart_advice
 from database import get_connection
 from datetime import datetime
 from werkzeug.utils import secure_filename
@@ -330,9 +330,42 @@ def serve_index():
     return render_template('index.html')
 
 
+@app.route('/api/smart_advice', methods=['POST'])
+def api_smart_advice():
+    """智能农事建议API（基于自然语言查询）"""
+    try:
+        data = request.json
+        question = data.get('question', '')
+        crop_type = data.get('crop_type', '')
+        growth_stage = data.get('growth_stage', '')
+        
+        if not question:
+            return jsonify({
+                "status": "error",
+                "message": "请提供查询问题"
+            }), 400
+        
+        # 调用智能建议引擎
+        advice = get_smart_advice(question, crop_type, growth_stage)
+        
+        return jsonify({
+            "status": "success",
+            "question": question,
+            "crop_type": crop_type,
+            "growth_stage": growth_stage,
+            "advice": advice
+        })
+        
+    except Exception as e:
+        return jsonify({
+            "status": "error",
+            "message": str(e)
+        }), 500
+
+
 @app.route('/api/upload_crop_image', methods=['POST'])
 def api_upload_crop_image():
-    """上传作物图片并保存路径"""
+    """上传作物图片并保存路径，可选进行病害识别"""
     try:
         field_id = request.form.get('field_id', type=int)
         if field_id is None:
@@ -371,6 +404,32 @@ def api_upload_crop_image():
             os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
         ).replace(os.sep, '/')
 
+        # 获取地块信息以确定作物类型
+        crop_type = ""
+        try:
+            conn = get_connection()
+            try:
+                with conn.cursor() as cursor:
+                    cursor.execute("SELECT crop_type FROM fields WHERE id = %s", (field_id,))
+                    field = cursor.fetchone()
+                    if field:
+                        crop_type = field.get('crop_type', '')
+            finally:
+                conn.close()
+        except Exception as e:
+            print(f"获取地块信息失败: {e}")
+
+        # 尝试进行图像识别
+        recognition_result = None
+        try:
+            from image_recognition import analyze_crop_image
+            recognition_result = analyze_crop_image(saved_path, crop_type)
+        except ImportError:
+            print("图像识别模块未找到")
+        except Exception as e:
+            print(f"图像识别失败: {e}")
+
+        # 保存到数据库
         conn = get_connection()
         try:
             with conn.cursor() as cursor:
@@ -384,11 +443,33 @@ def api_upload_crop_image():
         finally:
             conn.close()
 
-        return jsonify({
+        response_data = {
             "status": "success",
             "image_id": image_id,
             "image_path": f"/{relative_path}"
-        })
+        }
+
+        # 如果图像识别成功，添加识别结果
+        if recognition_result and recognition_result.get('status') == 'success':
+            response_data["recognition"] = recognition_result["analysis_result"]
+            
+            # 如果识别出病害，自动生成防治建议
+            if recognition_result["analysis_result"]["disease_name"] != "健康状态":
+                disease_advice = f"检测到{recognition_result['analysis_result']['disease_name']}，" \
+                               f"建议：{recognition_result['analysis_result']['treatment_advice']}"
+                
+                # 保存识别结果到决策记录
+                try:
+                    save_decision_record(
+                        crop_type=crop_type,
+                        growth_stage="图像识别",
+                        advice=disease_advice,
+                        field_id=field_id
+                    )
+                except Exception as e:
+                    print(f"保存识别结果失败: {e}")
+
+        return jsonify(response_data)
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
 

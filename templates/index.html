@@ -164,6 +164,7 @@
     
     <div class="tabs">
       <button class="tab active" onclick="switchTab('advice')">农事建议</button>
+      <button class="tab" onclick="switchTab('smart')">智能咨询</button>
       <button class="tab" onclick="switchTab('sensor')">传感器数据</button>
       <button class="tab" onclick="switchTab('history')">历史记录</button>
     </div>
@@ -202,6 +203,49 @@
         <h3>💡 系统建议</h3>
         <div id="adviceResult" class="result-box">
           <p style="color: #999;">建议将显示在这里...</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- 智能咨询标签页 -->
+    <div id="smart-tab" class="tab-content">
+      <div class="section">
+        <h2>🤖 智能农业咨询</h2>
+        <p style="color:#777; margin-bottom:15px;">基于农业知识库的智能问答系统，支持自然语言查询</p>
+        
+        <div class="form-group">
+          <label>选择地块：</label>
+          <select id="smartFieldSelect">
+            <option value="">请选择地块（可选）</option>
+          </select>
+        </div>
+        
+        <div class="form-group">
+          <label>咨询问题：</label>
+          <textarea id="smartQuestion" rows="3" style="width:100%; padding:8px; border:1px solid #ddd; border-radius:4px;" 
+                    placeholder="例如：水稻叶子发黄怎么办？玉米拔节期如何施肥？高温天气注意什么？"></textarea>
+        </div>
+        
+        <div style="margin-top: 15px;">
+          <button onclick="getSmartAdvice()" style="background: #28a745;">🔍 智能咨询</button>
+          <button onclick="clearSmartQuery()" style="background: #6c757d; margin-left: 10px;">清空</button>
+        </div>
+        
+        <div class="section" style="margin-top: 20px;">
+          <h3>💡 智能建议</h3>
+          <div id="smartResult" class="result-box">
+            <p style="color: #999;">智能建议将显示在这里...</p>
+          </div>
+        </div>
+        
+        <div class="section" style="background: #f8f9fa; border-left-color: #17a2b8;">
+          <h3>💬 常见问题示例</h3>
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px;">
+            <button onclick="setSmartQuestion('叶子发黄怎么办')" style="background: #17a2b8; font-size: 12px;">叶子发黄怎么办</button>
+            <button onclick="setSmartQuestion('如何防治病虫害')" style="background: #17a2b8; font-size: 12px;">如何防治病虫害</button>
+            <button onclick="setSmartQuestion('高温干旱应对措施')" style="background: #17a2b8; font-size: 12px;">高温干旱应对</button>
+            <button onclick="setSmartQuestion('土壤pH值调节')" style="background: #17a2b8; font-size: 12px;">土壤pH调节</button>
+          </div>
         </div>
       </div>
     </div>
@@ -378,7 +422,7 @@
         .then(data => {
           if (data.status !== 'success') return;
           fieldsCache = data.fields || [];
-          const fieldSelectIds = ['fieldSelect', 'sensorFieldSelect', 'historyFieldSelect'];
+          const fieldSelectIds = ['fieldSelect', 'sensorFieldSelect', 'historyFieldSelect', 'smartFieldSelect'];
           fieldSelectIds.forEach(id => {
             const sel = document.getElementById(id);
             if (!sel) return;
@@ -613,6 +657,77 @@
         }
       }
     });
+
+    function getSmartAdvice() {
+      const fieldId = document.getElementById('smartFieldSelect').value;
+      const question = document.getElementById('smartQuestion').value.trim();
+      
+      if (!question) {
+        document.getElementById('smartResult').innerHTML = '<div class="error">请输入咨询问题</div>';
+        return;
+      }
+      
+      document.getElementById('smartResult').innerHTML = '<p>🤖 正在分析您的问题...</p>';
+      
+      // 获取地块信息以确定作物类型
+      let cropType = '';
+      let growthStage = '';
+      if (fieldId) {
+        const field = getFieldById(fieldId);
+        if (field) {
+          cropType = field.crop_type;
+        }
+      }
+      
+      const requestData = {
+        question: question,
+        crop_type: cropType,
+        growth_stage: growthStage
+      };
+      
+      fetch('/api/smart_advice', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(requestData)
+      })
+        .then(response => response.json())
+        .then(data => {
+          if (data.status === 'success') {
+            // 格式化智能建议显示
+            let html = `<div style="background: #e8f5e9; padding: 15px; border-radius: 8px; margin-bottom: 15px;">`;
+            html += `<h4 style="color: #2e7d32; margin: 0 0 10px 0;">🤖 智能分析结果</h4>`;
+            html += `<p><strong>问题：</strong>${data.question}</p>`;
+            if (data.crop_type) {
+              html += `<p><strong>作物：</strong>${data.crop_type}</p>`;
+            }
+            html += `</div>`;
+            
+            // 显示建议内容
+            html += `<div style="white-space: pre-line; line-height: 1.6;">${data.advice}</div>`;
+            
+            document.getElementById('smartResult').innerHTML = html;
+          } else {
+            document.getElementById('smartResult').innerHTML = 
+              `<div class="error">智能咨询失败: ${data.message || '未知错误'}</div>`;
+          }
+        })
+        .catch(error => {
+          console.error('智能咨询错误:', error);
+          document.getElementById('smartResult').innerHTML = 
+            '<div class="error">网络请求失败，请检查连接或稍后重试</div>';
+        });
+    }
+    
+    function setSmartQuestion(question) {
+      document.getElementById('smartQuestion').value = question;
+    }
+    
+    function clearSmartQuery() {
+      document.getElementById('smartQuestion').value = '';
+      document.getElementById('smartResult').innerHTML = '<p style="color: #999;">智能建议将显示在这里...</p>';
+    }
 
     // 页面加载时先拉取用户，再加载地块
     window.addEventListener('DOMContentLoaded', loadUsers);
