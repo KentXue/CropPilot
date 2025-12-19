@@ -41,9 +41,13 @@ CropPilot/
 │   └── settings.py              # 配置文件（支持环境变量）
 │
 └── docs/                        # 项目文档
-    ├── api.md                   # API接口文档
-    ├── database.md              # 数据库设计文档
-    └── deployment.md            # 部署指南
+    ├── requirements_specification.md  # 需求规格说明书
+    ├── system_architecture.md         # 系统架构设计文档
+    ├── ui_prototype_design.md          # UI界面原型设计
+    ├── implementation_tasks.md         # 实施任务列表
+    ├── api.md                         # API接口文档
+    ├── database.md                    # 数据库设计文档
+    └── deployment.md                  # 部署指南
 ```
 
 ## 安装步骤
