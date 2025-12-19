@@ -2,13 +2,15 @@
 
 一个基于Flask的智能农业决策支持系统，围绕“用户-地块-作物”管理，帮助农民根据地块的作物和生长阶段获取农事建议，记录传感器数据与决策历史。
 
-## 功能特性
+## 系统特色
 
-- 🌾 **多作物支持**: 支持水稻、玉米等多种作物
-- 📊 **生长阶段管理**: 根据不同生长阶段提供针对性建议
-- 💡 **智能决策**: 基于知识库和数据库规则提供农事建议
-- 📈 **传感器数据支持**: 可记录和查询传感器监测数据
-- 🔄 **决策记录**: 记录历史决策和用户反馈
+- 🌾 **多作物智能管理**: 支持水稻、玉米等多种作物的全生长周期管理
+- 📊 **数据驱动决策**: 基于传感器数据和历史物候数据的科学决策
+- 💡 **混合智能引擎**: 规则引擎与智能检索相结合的双重决策机制
+- 📈 **实时数据监控**: 支持多源传感器数据采集、存储和实时分析
+- 🔄 **全程可追溯**: 完整的决策历史记录和用户反馈机制
+- 📷 **图像识别**: 支持作物图片上传和病虫害智能识别（规划中）
+- 📊 **数据可视化**: 丰富的图表展示和趋势分析功能
 
 ## 项目结构
 
@@ -54,8 +56,10 @@ CropPilot/
 
 ### 1. 环境要求
 
-- Python 3.7+
-- MySQL 5.7+ 或 MariaDB 10.2+
+- Python 3.11+ (推荐)
+- MySQL 8.0+ 或 MariaDB 10.3+
+- Git (版本控制)
+- 现代Web浏览器 (Chrome, Firefox, Safari, Edge)
 
 ### 2. 安装依赖
 
@@ -142,34 +146,118 @@ GET /api/users
 GET /api/fields?user_id=2
 ```
 
-## 数据库设计
+## 技术架构
+
+### 系统架构
+- **前端**: HTML5 + CSS3 + JavaScript (ES6+)
+- **后端**: Python Flask 3.0 + RESTful API
+- **数据库**: MySQL 8.0 (关系数据) + ChromaDB (向量数据)
+- **AI组件**: sentence-transformers (文本向量化)
+- **可视化**: Chart.js + D3.js
+- **部署**: Docker + Nginx + Gunicorn
+
+### 数据库设计
 
 详细的数据库设计文档请参考 [docs/database.md](docs/database.md)
 
-### 主要数据表
+**核心数据表**:
+- **users**: 用户表（支持farmer/admin/expert多角色）
+- **fields**: 农田/地块表（用户-地块一对多关系）
+- **knowledge_rules**: 知识规则表（按作物+生长阶段组织）
+- **sensor_data**: 传感器数据表（时序数据，关联地块）
+- **decision_records**: 决策记录表（支持决策追溯）
+- **crop_images**: 作物图片表（支持图像识别）
 
-- **users**: 用户表（角色 farmer/admin/expert）
-- **fields**: 农田/地块表（挂在用户下，一块地一种作物）
-- **knowledge_rules**: 知识规则表，按作物+生长阶段
-- **sensor_data**: 传感器数据表（关联地块，冗余作物/阶段便于查询）
-- **decision_records**: 决策记录表（关联地块，可选关联一条传感器数据）
+## 项目文档
 
-## 开发计划
+本项目提供完整的技术文档：
 
+- 📋 [需求规格说明书](docs/requirements_specification.md) - 系统需求与功能定义
+- 🏗️ [系统架构设计](docs/system_architecture.md) - 技术架构与模块设计
+- 🎨 [UI界面原型设计](docs/ui_prototype_design.md) - 用户界面设计规范
+- 📝 [实施任务列表](docs/implementation_tasks.md) - 开发任务与进度管理
+- 🔌 [API接口文档](docs/api.md) - RESTful API详细说明
+- 🗄️ [数据库设计文档](docs/database.md) - 数据模型与表结构
+- 🚀 [部署指南](docs/deployment.md) - 系统部署与运维
+
+## 开发进度
+
+### ✅ 已完成功能
+- [x] 基础系统架构设计
+- [x] 数据库设计与初始化
+- [x] 用户与地块管理
+- [x] 传感器数据采集与存储
 - [x] 基础决策引擎
 - [x] 知识库系统
-- [x] 数据库支持
-- [ ] 传感器数据输入界面
-- [ ] 数据可视化图表
-- [ ] 历史记录查询
-- [ ] 用户反馈系统
+- [x] RESTful API接口
+- [x] Web用户界面
+- [x] 图片上传功能
+- [x] 历史记录查询
+
+### 🚧 开发中功能
+- [ ] 病虫害图像识别模块
+- [ ] 智能知识库检索 (ChromaDB + sentence-transformers)
+- [ ] 数据可视化图表 (Chart.js)
+- [ ] 生长阶段自动判断
+- [ ] 异常检测与预警
+
+### 📋 计划功能
+- [ ] 用户反馈与评价系统
 - [ ] 数据导出功能
+- [ ] 移动端适配
+- [ ] 系统性能优化
+- [ ] 部署与运维工具
 
-## 贡献
+## 快速开始
 
-欢迎提交Issue和Pull Request！
+### 克隆项目
+```bash
+git clone <repository-url>
+cd CropPilot
+```
+
+### 创建虚拟环境
+```bash
+python -m venv venv
+# Windows
+venv\Scripts\activate
+# Linux/Mac
+source venv/bin/activate
+```
+
+### 安装依赖并启动
+```bash
+pip install -r requirements.txt
+# 配置数据库（参考上面的数据库配置步骤）
+python src/app.py
+```
+
+访问 `http://localhost:5000` 开始使用系统。
+
+## 系统截图
+
+### 主仪表板
+- 实时数据监控面板
+- 智能农事建议展示
+- 地块状态概览
+
+### 数据管理
+- 传感器数据录入
+- 作物图片上传
+- 历史记录查询
+
+*详细的界面设计请参考 [UI原型设计文档](docs/ui_prototype_design.md)*
+
+## 贡献指南
+
+欢迎参与项目开发！请遵循以下步骤：
+
+1. Fork 本仓库
+2. 创建功能分支 (`git checkout -b feature/AmazingFeature`)
+3. 提交更改 (`git commit -m 'Add some AmazingFeature'`)
+4. 推送到分支 (`git push origin feature/AmazingFeature`)
+5. 创建 Pull Request
 
 ## 许可证
 
-MIT License
-
+本项目采用 MIT 许可证 - 详情请查看 [LICENSE](LICENSE) 文件。
