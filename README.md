@@ -25,7 +25,17 @@ CropPilot/
 │   ├── app.py                   # Flask应用主文件
 │   ├── database.py              # 数据库连接和配置
 │   ├── decision_engine.py       # 决策引擎核心逻辑
+│   ├── smart_knowledge.py       # 智能知识库（ChromaDB + 向量检索）
+│   ├── knowledge_loader.py      # 多数据源知识加载器
+│   ├── image_recognition.py     # 图像识别模块
 │   └── knowledge_base.py        # 知识库（备用数据源/缓存）
+│
+├── data/                        # 数据文件目录
+│   └── agriculture_knowledge.json  # JSON格式农业知识库
+│
+├── manage_knowledge.py          # 知识库管理工具（交互式CLI）
+├── demo_knowledge_management.py # 知识管理演示脚本
+├── reset_knowledge_db.py        # 向量数据库重置工具
 │
 ├── sql/                         # SQL脚本目录
 │   ├── schema.sql               # 数据库表结构定义（含 users/fields 等）
@@ -66,6 +76,11 @@ CropPilot/
 ```bash
 pip install -r requirements.txt
 ```
+
+**智能功能依赖说明**：
+- `chromadb`: 向量数据库，用于语义搜索
+- `sentence-transformers`: 文本向量化模型
+- 首次运行时会自动下载约50MB的AI模型文件
 
 ### 3. 数据库配置
 
@@ -131,6 +146,16 @@ POST /api/save_sensor_data
 }
 ```
 
+**智能农事咨询（自然语言查询）：**
+```json
+POST /api/smart_advice
+{
+  "question": "水稻叶子发黄怎么办",
+  "crop_type": "水稻",
+  "growth_stage": "分蘖期"
+}
+```
+
 **上传作物图片：**
 ```
 POST /api/upload_crop_image
@@ -152,7 +177,8 @@ GET /api/fields?user_id=2
 - **前端**: HTML5 + CSS3 + JavaScript (ES6+)
 - **后端**: Python Flask 3.0 + RESTful API
 - **数据库**: MySQL 8.0 (关系数据) + ChromaDB (向量数据)
-- **AI组件**: sentence-transformers (文本向量化)
+- **AI组件**: sentence-transformers (文本向量化) + 图像识别
+- **知识管理**: JSON文件 + 硬编码兜底的混合方案
 - **可视化**: Chart.js + D3.js
 - **部署**: Docker + Nginx + Gunicorn
 
@@ -194,9 +220,15 @@ GET /api/fields?user_id=2
 - [x] 图片上传功能
 - [x] 历史记录查询
 
+### ✅ 已完成功能（续）
+- [x] 智能知识库检索 (ChromaDB + sentence-transformers)
+- [x] JSON文件知识管理系统
+- [x] 多数据源知识加载器
+- [x] 语义搜索与向量检索
+- [x] 知识库管理工具
+
 ### 🚧 开发中功能
 - [ ] 病虫害图像识别模块
-- [ ] 智能知识库检索 (ChromaDB + sentence-transformers)
 - [ ] 数据可视化图表 (Chart.js)
 - [ ] 生长阶段自动判断
 - [ ] 异常检测与预警
@@ -233,6 +265,28 @@ python src/app.py
 ```
 
 访问 `http://localhost:5000` 开始使用系统。
+
+## 知识库管理
+
+### JSON文件管理
+系统支持通过JSON文件管理农业知识库，提供灵活的知识更新方式：
+
+```bash
+# 交互式知识管理
+python manage_knowledge.py
+
+# 演示知识管理功能
+python demo_knowledge_management.py
+
+# 重置向量数据库（更新JSON后使用）
+python reset_knowledge_db.py
+```
+
+### 知识库特点
+- **多数据源支持**: JSON文件、CSV文件、数据库
+- **硬编码兜底**: 确保系统在任何情况下都能运行
+- **语义搜索**: 基于ChromaDB和sentence-transformers的智能检索
+- **离线运行**: 日常使用完全离线，仅初次安装需要网络
 
 ## 系统截图
 

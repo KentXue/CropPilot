@@ -1,5 +1,6 @@
 # 智能知识库检索模块
 # 基于ChromaDB和sentence-transformers实现语义搜索
+# 支持多种数据源：JSON文件、数据库、硬编码兜底
 
 import os
 import sys
@@ -18,10 +19,27 @@ except ImportError as e:
     print("请运行: pip install chromadb sentence-transformers")
     SMART_KNOWLEDGE_AVAILABLE = False
 
+# 导入知识加载器
+try:
+    from knowledge_loader import KnowledgeLoader
+    KNOWLEDGE_LOADER_AVAILABLE = True
+except ImportError:
+    KNOWLEDGE_LOADER_AVAILABLE = False
+
 class SmartKnowledgeBase:
-    """智能知识库检索系统"""
+    """智能知识库检索系统 - 支持多数据源"""
     
-    def __init__(self):
+    def __init__(self, data_source: str = "json", data_path: str = None):
+        """
+        初始化智能知识库
+        
+        Args:
+            data_source: 数据源类型 ("json", "database", "hardcoded")
+            data_path: 数据文件路径（用于JSON/CSV）
+        """
+        self.data_source = data_source
+        self.data_path = data_path or "data/agriculture_knowledge.json"
+        
         if not SMART_KNOWLEDGE_AVAILABLE:
             self.available = False
             return
@@ -40,8 +58,8 @@ class SmartKnowledgeBase:
                 metadata={"description": "农业知识库"}
             )
             
-            # 初始化知识库（如果为空）
-            if self.collection.count() == 0:
+            # 初始化知识库（如果为空或需要更新）
+            if self.collection.count() == 0 or self._should_reload_knowledge():
                 self._initialize_knowledge_base()
                 
             self.available = True
@@ -51,73 +69,51 @@ class SmartKnowledgeBase:
             print(f"智能知识库初始化失败: {e}")
             self.available = False
     
-    def _initialize_knowledge_base(self):
-        """初始化农业知识库"""
-        print("正在初始化农业知识库...")
+    def _should_reload_knowledge(self) -> bool:
+        """检查是否需要重新加载知识库"""
+        # 这里可以添加更复杂的逻辑，比如检查文件修改时间
+        return False
+    
+    def _load_knowledge_documents(self) -> List[Dict[str, Any]]:
+        """根据配置的数据源加载知识文档"""
+        if not KNOWLEDGE_LOADER_AVAILABLE:
+            print("知识加载器不可用，使用硬编码知识")
+            return self._get_hardcoded_knowledge()
         
-        # 农业知识文档
-        knowledge_docs = [
-            {
-                "content": "水稻分蘖期是水稻生长的关键时期，此时需要保持浅水层3-5cm，促进分蘖。施肥方面，每亩追施尿素5-8公斤，促进分蘖发生。注意防治稻飞虱和纹枯病。",
-                "source": "水稻栽培技术手册",
-                "crop": "水稻",
-                "stage": "分蘖期"
-            },
-            {
-                "content": "水稻拔节期要控制氮肥施用，防止徒长倒伏。保持适度水层，避免过深或过浅。此期是决定穗数的关键期，要加强田间管理。",
-                "source": "水稻栽培技术手册", 
-                "crop": "水稻",
-                "stage": "拔节期"
-            },
-            {
-                "content": "水稻抽穗期需要充足的水分供应，保持水层5-7cm。叶面喷施磷酸二氢钾，提高结实率。注意防治稻瘟病和褐飞虱。",
-                "source": "水稻栽培技术手册",
-                "crop": "水稻", 
-                "stage": "抽穗期"
-            },
-            {
-                "content": "玉米苗期管理要点：保持土壤湿润但不积水，基肥为主，可适当追施少量氮肥。注意防治地下害虫如蛴螬、金针虫等。",
-                "source": "玉米栽培技术指南",
-                "crop": "玉米",
-                "stage": "苗期"
-            },
-            {
-                "content": "玉米拔节期是需水需肥的关键期，追施氮肥促进茎秆生长。保持充足水分，但要注意排水防涝。此期要防治玉米螟虫害。",
-                "source": "玉米栽培技术指南",
-                "crop": "玉米", 
-                "stage": "拔节期"
-            },
-            {
-                "content": "玉米抽雄期需要大量水分，是决定产量的关键期。增施磷钾肥，促进授粉结实。注意防治玉米大斑病和小斑病。",
-                "source": "玉米栽培技术指南",
-                "crop": "玉米",
-                "stage": "抽雄期"
-            },
-            {
-                "content": "作物叶片发黄可能的原因：1.缺氮肥导致的生理性黄化；2.根系受损影响养分吸收；3.病害感染如纹枯病、叶枯病；4.虫害危害如蚜虫、红蜘蛛。需要根据具体症状判断原因。",
-                "source": "作物病虫害诊断手册",
-                "crop": "通用",
-                "stage": "通用"
-            },
-            {
-                "content": "土壤pH值过高或过低都会影响作物生长。pH值6.0-7.0最适宜大多数作物。pH过低可施用石灰调节，pH过高可施用硫磺或有机肥改良。",
-                "source": "土壤改良技术手册", 
-                "crop": "通用",
-                "stage": "通用"
-            },
-            {
-                "content": "高温干旱条件下的应对措施：1.及时灌溉，保持土壤湿润；2.叶面喷水降温；3.覆盖遮阳网或秸秆；4.叶面喷施抗旱剂；5.适当修剪减少蒸腾。",
-                "source": "农业气象灾害防御手册",
-                "crop": "通用", 
-                "stage": "通用"
-            },
-            {
-                "content": "病虫害综合防治原则：预防为主，综合防治。优先使用农业防治、生物防治，化学防治作为补充。选择高效低毒农药，注意轮换用药避免抗性。",
-                "source": "病虫害防治指南",
-                "crop": "通用",
-                "stage": "通用"
-            }
-        ]
+        loader = KnowledgeLoader()
+        
+        if self.data_source == "json":
+            return loader.load_from_json(os.path.basename(self.data_path))
+        elif self.data_source == "csv":
+            return loader.load_from_csv(os.path.basename(self.data_path))
+        elif self.data_source == "database":
+            # 这里需要传入数据库连接
+            # return loader.load_from_database(connection)
+            print("数据库加载暂未实现，使用JSON兜底")
+            return loader.load_from_json()
+        else:
+            return self._get_hardcoded_knowledge()
+
+    def _initialize_knowledge_base(self):
+        """初始化农业知识库 - 支持多数据源"""
+        print(f"正在从 {self.data_source} 初始化农业知识库...")
+        
+        # 加载知识文档
+        knowledge_docs = self._load_knowledge_documents()
+        
+        if not knowledge_docs:
+            print("未找到知识文档，使用硬编码兜底")
+            knowledge_docs = self._get_hardcoded_knowledge()
+        
+        # 清空现有集合（如果需要重新加载）
+        try:
+            self.client.delete_collection("agriculture_knowledge")
+            self.collection = self.client.create_collection(
+                name="agriculture_knowledge",
+                metadata={"description": "农业知识库"}
+            )
+        except:
+            pass  # 集合可能不存在
         
         # 批量添加文档到向量数据库
         for i, doc in enumerate(knowledge_docs):
@@ -133,14 +129,44 @@ class SmartKnowledgeBase:
                         "source": doc["source"],
                         "crop": doc["crop"], 
                         "stage": doc["stage"],
-                        "doc_id": i
+                        "doc_id": doc.get("id", str(i)),
+                        "priority": doc.get("priority", 1)
                     }],
-                    ids=[f"doc_{i}"]
+                    ids=[doc.get("id", f"doc_{i}")]
                 )
             except Exception as e:
                 print(f"添加文档 {i} 失败: {e}")
         
         print(f"成功初始化 {len(knowledge_docs)} 条农业知识")
+    
+    def _get_hardcoded_knowledge(self) -> List[Dict[str, Any]]:
+        """硬编码的兜底知识库（最小集合）"""
+        return [
+            {
+                "id": "hardcoded_leaf_yellow",
+                "content": "作物叶片发黄可能的原因：1.缺氮肥导致的生理性黄化；2.根系受损影响养分吸收；3.病害感染如纹枯病、叶枯病；4.虫害危害如蚜虫、红蜘蛛。需要根据具体症状判断原因。",
+                "source": "系统内置知识",
+                "crop": "通用",
+                "stage": "通用",
+                "priority": 1
+            },
+            {
+                "id": "hardcoded_pest_control",
+                "content": "病虫害综合防治原则：预防为主，综合防治。优先使用农业防治、生物防治，化学防治作为补充。选择高效低毒农药，注意轮换用药避免抗性。",
+                "source": "系统内置知识",
+                "crop": "通用",
+                "stage": "通用",
+                "priority": 1
+            },
+            {
+                "id": "hardcoded_drought",
+                "content": "高温干旱条件下的应对措施：1.及时灌溉，保持土壤湿润；2.叶面喷水降温；3.覆盖遮阳网或秸秆；4.叶面喷施抗旱剂；5.适当修剪减少蒸腾。",
+                "source": "系统内置知识",
+                "crop": "通用",
+                "stage": "通用",
+                "priority": 1
+            }
+        ]
     
     def add_document(self, content: str, source: str, crop: str = "通用", stage: str = "通用"):
         """添加新的知识文档"""
@@ -210,7 +236,8 @@ class SmartKnowledgeBase:
                         "source": meta.get('source', '未知来源'),
                         "crop": meta.get('crop', '通用'),
                         "stage": meta.get('stage', '通用'),
-                        "relevance_score": 1 - distance,  # 转换为相似度分数
+                        "relevance_score": max(0, 1 - distance),  # 确保分数为正数
+                        "distance": distance,  # 保留原始距离用于调试
                         "rank": i + 1
                     })
             
@@ -219,6 +246,7 @@ class SmartKnowledgeBase:
         except Exception as e:
             print(f"智能查询失败: {e}")
             return []
+
     
     def format_advice(self, snippets: List[Dict[str, Any]], question: str) -> str:
         """将检索结果格式化为友好的建议文本"""
@@ -229,7 +257,9 @@ class SmartKnowledgeBase:
         
         for snippet in snippets:
             relevance = snippet.get('relevance_score', 0)
-            if relevance > 0.3:  # 只显示相关度较高的结果
+            distance = snippet.get('distance', 0)
+            # 对于向量搜索，距离小于5.0通常表示有一定相关性
+            if distance < 5.0:  
                 formatted += f"💡 {snippet['content']}\n"
                 formatted += f"   📚 来源：{snippet['source']}\n\n"
         
@@ -241,16 +271,16 @@ class SmartKnowledgeBase:
 # 全局实例
 smart_kb = None
 
-def get_smart_knowledge_base():
+def get_smart_knowledge_base(data_source: str = "json", data_path: str = None):
     """获取智能知识库实例（单例模式）"""
     global smart_kb
     if smart_kb is None:
-        smart_kb = SmartKnowledgeBase()
+        smart_kb = SmartKnowledgeBase(data_source=data_source, data_path=data_path)
     return smart_kb
 
 def smart_query(question: str, crop_type: str = "", growth_stage: str = "") -> str:
     """便捷的智能查询函数"""
-    kb = get_smart_knowledge_base()
+    kb = get_smart_knowledge_base()  # 默认使用JSON数据源
     if not kb.available:
         return "智能知识库暂不可用，请检查相关依赖是否已安装。"
     
