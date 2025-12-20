@@ -120,7 +120,6 @@ def api_save_sensor_data():
                     field_id,
                     crop_type,
                     growth_stage,
-                    data.get('crop_type'),
                     data.get('temperature'),
                     data.get('humidity'),
                     data.get('soil_moisture'),
@@ -472,6 +471,156 @@ def api_upload_crop_image():
         return jsonify(response_data)
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
+
+
+@app.route('/api/check_field_alerts', methods=['GET'])
+def api_check_field_alerts():
+    """检查地块预警情况"""
+    try:
+        field_id = request.args.get('field_id', type=int)
+        if not field_id:
+            return jsonify({
+                "status": "error",
+                "message": "缺少field_id参数"
+            }), 400
+        
+        # 导入异常检测模块
+        from anomaly_detection import get_anomaly_detector
+        
+        detector = get_anomaly_detector()
+        result = detector.check_field_alerts(field_id)
+        
+        return jsonify(result)
+        
+    except Exception as e:
+        return jsonify({
+            "status": "error",
+            "message": str(e)
+        }), 500
+
+
+@app.route('/api/check_sensor_anomalies', methods=['POST'])
+def api_check_sensor_anomalies():
+    """检查传感器数据异常"""
+    try:
+        data = request.json
+        sensor_data = data.get('sensor_data', {})
+        crop_type = data.get('crop_type', '水稻')
+        
+        if not sensor_data:
+            return jsonify({
+                "status": "error",
+                "message": "缺少sensor_data参数"
+            }), 400
+        
+        # 导入异常检测模块
+        from anomaly_detection import get_anomaly_detector
+        
+        detector = get_anomaly_detector()
+        anomalies = detector.detect_sensor_data_anomalies(sensor_data, crop_type)
+        alert_summary = detector.generate_alert_summary(anomalies)
+        
+        return jsonify({
+            "status": "success",
+            "anomalies": anomalies,
+            "alert_summary": alert_summary
+        })
+        
+    except Exception as e:
+        return jsonify({
+            "status": "error",
+            "message": str(e)
+        }), 500
+
+
+@app.route('/api/generate_demo_data', methods=['POST'])
+def api_generate_demo_data():
+    """生成演示用的传感器数据"""
+    try:
+        data = request.json
+        field_id = data.get('field_id')
+        days = data.get('days', 7)  # 默认生成7天的数据
+        
+        if not field_id:
+            return jsonify({
+                "status": "error",
+                "message": "缺少field_id参数"
+            }), 400
+        
+        # 获取地块信息
+        conn = get_connection()
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute("SELECT crop_type FROM fields WHERE id = %s", (field_id,))
+                field = cursor.fetchone()
+                if not field:
+                    return jsonify({
+                        "status": "error",
+                        "message": "地块不存在"
+                    }), 404
+                
+                crop_type = field.get('crop_type', '水稻')
+                
+                # 生成模拟数据
+                import random
+                from datetime import datetime, timedelta
+                
+                base_time = datetime.now() - timedelta(days=days)
+                records_created = 0
+                
+                for i in range(days * 4):  # 每天4条记录
+                    record_time = base_time + timedelta(hours=i * 6)  # 每6小时一条
+                    
+                    # 根据作物类型生成不同的数据范围
+                    if crop_type == '水稻':
+                        temp_base, humidity_base = 28, 75
+                        soil_moisture_base, ph_base = 80, 6.5
+                    else:  # 玉米等
+                        temp_base, humidity_base = 25, 65
+                        soil_moisture_base, ph_base = 70, 6.8
+                    
+                    # 添加随机波动
+                    temperature = round(temp_base + random.uniform(-5, 8), 1)
+                    humidity = round(humidity_base + random.uniform(-15, 20), 1)
+                    soil_moisture = round(soil_moisture_base + random.uniform(-20, 15), 1)
+                    ph_value = round(ph_base + random.uniform(-0.8, 1.2), 1)
+                    light_intensity = random.randint(20000, 80000)
+                    nitrogen = round(random.uniform(100, 200), 1)
+                    phosphorus = round(random.uniform(50, 120), 1)
+                    potassium = round(random.uniform(80, 150), 1)
+                    
+                    # 插入数据
+                    sql = """
+                        INSERT INTO sensor_data 
+                        (field_id, crop_type, growth_stage, temperature, humidity, 
+                         soil_moisture, light_intensity, ph_value, nitrogen, 
+                         phosphorus, potassium, location, recorded_at)
+                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                    """
+                    
+                    cursor.execute(sql, (
+                        field_id, crop_type, '分蘖期', temperature, humidity,
+                        soil_moisture, light_intensity, ph_value, nitrogen,
+                        phosphorus, potassium, f'演示数据-{field_id}', record_time
+                    ))
+                    records_created += 1
+                
+                conn.commit()
+                
+                return jsonify({
+                    "status": "success",
+                    "message": f"成功生成 {records_created} 条演示数据",
+                    "records_created": records_created
+                })
+                
+        finally:
+            conn.close()
+            
+    except Exception as e:
+        return jsonify({
+            "status": "error",
+            "message": str(e)
+        }), 500
 
 
 if __name__ == '__main__':
