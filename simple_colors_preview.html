@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CropPilot 简洁配色方案预览</title>
+    <style>
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            min-height: 100vh;
+        }
+        
+        .preview-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: #ffffff;
+            border-radius: 16px;
+            border: 1px solid #e0e0e0;
+            box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: #2E7D32;
+            padding: 2rem;
+            text-align: center;
+        }
+        
+        .header h1 {
+            color: white;
+            font-size: 2rem;
+            margin: 0 0 0.5rem 0;
+        }
+        
+        .header .subtitle {
+            color: white;
+            font-size: 1rem;
+            margin: 0;
+            opacity: 0.9;
+        }
+        
+        .content {
+            padding: 2rem;
+        }
+        
+        .color-palette {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        
+        .color-card {
+            padding: 1rem;
+            border-radius: 8px;
+            text-align: center;
+            border: 1px solid #e0e0e0;
+        }
+        
+        .color-primary { background: #2E7D32; color: white; }
+        .color-accent { background: #FFA726; color: white; }
+        .color-background { background: #ffffff; }
+        .color-text { background: #2c2c2c; color: white; }
+        .color-border { background: #e0e0e0; }
+        
+        .text-sample {
+            background: #ffffff;
+            padding: 1.5rem;
+            border-radius: 8px;
+            border: 1px solid #e0e0e0;
+            margin: 1rem 0;
+        }
+        
+        .text-sample h2 {
+            color: #2c2c2c;
+            margin: 0 0 1rem 0;
+        }
+        
+        .text-sample p {
+            color: #2c2c2c;
+            margin: 0.5rem 0;
+        }
+        
+        .button-demo {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            margin: 1rem 0;
+        }
+        
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+        
+        .btn-primary {
+            background: #2E7D32;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #1b5e20;
+            transform: translateY(-1px);
+        }
+        
+        .btn-secondary {
+            background: #ffffff;
+            color: #2c2c2c;
+            border: 1px solid #e0e0e0;
+        }
+        
+        .btn-secondary:hover {
+            background: #f5f5f5;
+        }
+        
+        .tabs-demo {
+            background: #f5f5f5;
+            border-radius: 12px;
+            padding: 0.25rem;
+            margin: 1rem 0;
+            border: 1px solid #e0e0e0;
+            display: flex;
+            gap: 0.25rem;
+        }
+        
+        .tab {
+            flex: 1;
+            padding: 0.75rem 1rem;
+            background: transparent;
+            border: none;
+            border-radius: 8px;
+            color: #666666;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .tab.active {
+            background: #2E7D32;
+            color: white;
+        }
+        
+        .tab:hover {
+            background: #ffffff;
+            color: #2c2c2c;
+        }
+        
+        .comparison {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin: 2rem 0;
+        }
+        
+        .comparison-item {
+            padding: 1rem;
+            border-radius: 8px;
+            border: 1px solid #e0e0e0;
+        }
+        
+        .old-design {
+            background: linear-gradient(135deg, #F0B400, #2A5200, #038056, #039688);
+            color: white;
+        }
+        
+        .new-design {
+            background: #ffffff;
+            color: #2c2c2c;
+        }
+    </style>
+</head>
+<body>
+    <div class="preview-container">
+        <div class="header">
+            <h1>🌾 CropPilot</h1>
+            <p class="subtitle">智能农业决策支持系统 - 简洁配色方案</p>
+        </div>
+        
+        <div class="content">
+            <h2 style="color: #2c2c2c; text-align: center; margin-bottom: 2rem;">🎨 新的简洁配色方案</h2>
+            
+            <div class="color-palette">
+                <div class="color-card color-primary">
+                    <h3>#2E7D32</h3>
+                    <p>主绿色 - 农业主题</p>
+                </div>
+                <div class="color-card color-accent">
+                    <h3>#FFA726</h3>
+                    <p>橙黄色 - 强调色</p>
+                </div>
+                <div class="color-card color-background">
+                    <h3>#ffffff</h3>
+                    <p>白色 - 背景色</p>
+                </div>
+                <div class="color-card color-text">
+                    <h3>#2c2c2c</h3>
+                    <p>深灰色 - 文字色</p>
+                </div>
+                <div class="color-card color-border">
+                    <h3>#e0e0e0</h3>
+                    <p>浅灰色 - 边框色</p>
+                </div>
+            </div>
+            
+            <div class="text-sample">
+                <h2>📋 设计原则</h2>
+                <p><strong>简洁至上：</strong>只使用3个主要颜色，避免视觉混乱</p>
+                <p><strong>清晰层次：</strong>明确的主色、强调色和中性色分工</p>
+                <p><strong>农业主题：</strong>绿色体现农业特色，但更加现代简洁</p>
+                <p><strong>易于阅读：</strong>高对比度确保所有文字清晰可见</p>
+            </div>
+            
+            <div class="button-demo">
+                <button class="btn btn-primary">主要按钮</button>
+                <button class="btn btn-secondary">次要按钮</button>
+            </div>
+            
+            <div class="tabs-demo">
+                <button class="tab active">🌾 农事建议</button>
+                <button class="tab">🤖 智能咨询</button>
+                <button class="tab">📊 传感器数据</button>
+                <button class="tab">📈 数据可视化</button>
+            </div>
+            
+            <div class="comparison">
+                <div class="comparison-item old-design">
+                    <h3>❌ 之前：复杂混乱</h3>
+                    <p>使用4种不同颜色：#F0B400, #2A5200, #038056, #039688</p>
+                    <p>渐变背景眼花缭乱</p>
+                    <p>颜色层次不清晰</p>
+                </div>
+                <div class="comparison-item new-design">
+                    <h3>✅ 现在：简洁清晰</h3>
+                    <p>只使用3个主要颜色：绿色、橙色、白色</p>
+                    <p>简洁的浅色背景</p>
+                    <p>清晰的视觉层次</p>
+                </div>
+            </div>
+            
+            <div class="text-sample">
+                <h2>✅ 改进效果</h2>
+                <ul style="color: #2c2c2c;">
+                    <li><strong>视觉舒适：</strong>不再眼花缭乱，看起来更专业</li>
+                    <li><strong>易于使用：</strong>清晰的按钮和交互元素</li>
+                    <li><strong>保持主题：</strong>绿色仍然体现农业特色</li>
+                    <li><strong>现代感：</strong>简洁的设计更符合现代审美</li>
+                    <li><strong>可维护：</strong>更少的颜色变量，更容易管理</li>
+                </ul>
+            </div>
+            
+            <div style="text-align: center; margin-top: 2rem; padding: 1rem; background: #2E7D32; border-radius: 8px; color: white;">
+                <p style="font-weight: bold; margin: 0;">
+                    🚀 访问 <code>http://localhost:5000</code> 查看完整效果
+                </p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

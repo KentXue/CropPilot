@@ -7,181 +7,767 @@
   <!-- Chart.js库 -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
+    :root {
+      /* 简洁配色方案 - 只使用3个主要颜色 */
+      --primary-color: #2E7D32;      /* 主绿色 - 农业主题 */
+      --accent-color: #FFA726;       /* 橙黄色 - 强调色 */
+      --background-color: #ffffff;   /* 白色背景 */
+      
+      /* 文字颜色 */
+      --text-primary: #2c2c2c;       /* 深灰色文字 */
+      --text-secondary: #666666;     /* 中灰色文字 */
+      --text-light: #ffffff;         /* 白色文字 */
+      
+      /* 中性色 */
+      --border-color: #e0e0e0;       /* 边框颜色 */
+      --hover-color: #f5f5f5;        /* 悬停背景 */
+      --disabled-color: #cccccc;     /* 禁用状态 */
+      
+      /* 阴影和圆角保持不变 */
+      --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.15);
+      --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.2), 0 2px 4px -2px rgb(0 0 0 / 0.15);
+      --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.2), 0 4px 6px -4px rgb(0 0 0 / 0.15);
+      --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.2), 0 8px 10px -6px rgb(0 0 0 / 0.15);
+      
+      --radius-sm: 0.375rem;
+      --radius-md: 0.5rem;
+      --radius-lg: 0.75rem;
+      --radius-xl: 1rem;
+    }
+    
     * {
       margin: 0;
       padding: 0;
       box-sizing: border-box;
     }
+    
     body {
-      font-family: 'Microsoft YaHei', Arial, sans-serif;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
       min-height: 100vh;
-      padding: 20px;
+      color: var(--text-primary);
+      line-height: 1.6;
+      font-size: 14px;
+      padding: 1rem;
     }
+    
     .container {
-      max-width: 1200px;
+      max-width: 1440px;
       margin: 0 auto;
-      background: white;
-      border-radius: 10px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-      padding: 30px;
+      background: var(--background-color);
+      border-radius: var(--radius-xl);
+      box-shadow: var(--shadow-xl);
+      border: 1px solid var(--border-color);
+      overflow: hidden;
+      position: relative;
     }
-    h1 {
-      color: #333;
+    
+    .container::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: var(--primary-color);
+    }
+    .header {
+      padding: 2rem 2.5rem 1rem;
       text-align: center;
-      margin-bottom: 30px;
-      font-size: 28px;
+      background: var(--primary-color);
+      border-bottom: none;
     }
+    
+    h1 {
+      font-size: clamp(1.75rem, 4vw, 2.25rem);
+      font-weight: 700;
+      color: var(--text-light);
+      margin-bottom: 0.5rem;
+      letter-spacing: -0.025em;
+    }
+    
+    .subtitle {
+      color: var(--text-light) !important;
+      font-size: 1rem;
+      font-weight: 400;
+      margin-bottom: 1.5rem;
+      opacity: 0.9;
+    }
+    
+    .main-content {
+      padding: 0 2.5rem 2.5rem;
+    }
+    
     h2, h3 {
-      color: #555;
-      margin: 20px 0 15px 0;
+      color: var(--text-primary) !important;
+      font-weight: 600;
+      margin-bottom: 1rem;
+      letter-spacing: -0.025em;
     }
+    
+    h2 {
+      font-size: 1.25rem;
+    }
+    
+    h3 {
+      font-size: 1.125rem;
+    }
+    
     .section {
-      margin-bottom: 30px;
-      padding: 20px;
-      background: #f8f9fa;
-      border-radius: 8px;
-      border-left: 4px solid #667eea;
+      margin-bottom: 2rem;
+      background: var(--background-color);
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--border-color);
+      box-shadow: var(--shadow-sm);
+      transition: all 0.2s ease;
+      overflow: hidden;
+    }
+    
+    .section:hover {
+      box-shadow: var(--shadow-md);
+      border-color: var(--primary-color);
+    }
+    
+    .section-header {
+      padding: 1.5rem 1.5rem 0;
+      border-bottom: 1px solid var(--border-color);
+      margin-bottom: 1.5rem;
+      background: var(--hover-color);
+    }
+    
+    .section-content {
+      padding: 0 1.5rem 1.5rem;
+    }
+    
+    .user-selector {
+      background: var(--accent-color);
+      border-radius: var(--radius-lg);
+      padding: 1rem 1.5rem;
+      margin-bottom: 2rem;
+      border: 1px solid var(--border-color);
     }
     .form-group {
-      margin-bottom: 15px;
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 1rem;
+      margin-bottom: 1.25rem;
+      flex-wrap: wrap;
     }
+    
+    @media (max-width: 768px) {
+      .form-group {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.75rem;
+      }
+    }
+    
     label {
-      min-width: 100px;
-      font-weight: bold;
-      color: #333;
+      font-weight: 500;
+      color: var(--text-primary) !important;
+      font-size: 0.875rem;
+      min-width: 120px;
+      white-space: nowrap;
     }
-    select, input {
-      padding: 8px 12px;
-      border: 1px solid #ddd;
-      border-radius: 4px;
-      font-size: 14px;
+    
+    select, input, textarea {
+      padding: 0.75rem 1rem;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      font-size: 0.875rem;
       flex: 1;
+      transition: all 0.2s ease;
+      background: var(--background-color);
+      font-family: inherit;
+      color: var(--text-primary);
     }
-    button {
-      background: #667eea;
-      color: white;
+    
+    select:focus, input:focus, textarea:focus {
+      outline: none;
+      border-color: var(--primary-color);
+      box-shadow: 0 0 0 3px rgba(46, 125, 50, 0.1);
+    }
+    
+    select:hover, input:hover, textarea:hover {
+      border-color: var(--primary-color);
+    }
+    
+    input::placeholder, textarea::placeholder {
+      color: #999999;
+    }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      padding: 0.75rem 1.5rem;
       border: none;
-      padding: 10px 20px;
-      border-radius: 5px;
+      border-radius: var(--radius-md);
+      font-size: 0.875rem;
+      font-weight: 500;
       cursor: pointer;
-      font-size: 14px;
-      transition: background 0.3s;
+      transition: all 0.2s ease;
+      text-decoration: none;
+      white-space: nowrap;
+      position: relative;
+      overflow: hidden;
     }
-    button:hover {
-      background: #5568d3;
+    
+    .btn-primary {
+      background: var(--primary-color);
+      color: var(--text-light);
+      box-shadow: var(--shadow-sm);
+      border: 1px solid var(--primary-color);
     }
-    button:disabled {
-      background: #ccc;
+    
+    .btn-primary:hover {
+      background: #1b5e20;
+      box-shadow: var(--shadow-md);
+      transform: translateY(-1px);
+    }
+    
+    .btn-success {
+      background: #4caf50;
+      color: white;
+      box-shadow: var(--shadow-sm);
+    }
+    
+    .btn-success:hover {
+      background: #388e3c;
+      box-shadow: var(--shadow-md);
+      transform: translateY(-1px);
+    }
+    
+    .btn-secondary {
+      background: var(--background-color);
+      color: var(--text-primary);
+      border: 1px solid var(--border-color);
+    }
+    
+    .btn-secondary:hover {
+      background: var(--hover-color);
+      border-color: var(--primary-color);
+    }
+    
+    .btn:disabled {
+      background: #f5f5f5;
+      color: #999999;
       cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+    
+    .btn:active {
+      transform: translateY(0);
+    }
+    
+    /* Legacy button support */
+    button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      padding: 0.75rem 1.5rem;
+      border: none;
+      border-radius: var(--radius-md);
+      font-size: 0.875rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      background: var(--primary-color);
+      color: white;
+      box-shadow: var(--shadow-sm);
+    }
+    
+    button:hover {
+      background: #1b5e20;
+      box-shadow: var(--shadow-md);
+      transform: translateY(-1px);
+    }
+    
+    button:disabled {
+      background: var(--disabled-color);
+      color: #999999;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
     }
     .result-box {
-      border: 2px solid #667eea;
-      padding: 20px;
-      border-radius: 8px;
-      background: white;
-      min-height: 100px;
-      margin-top: 15px;
+      background: #fafafa;
+      border: 1px solid #e0e0e0;
+      border-radius: var(--radius-lg);
+      padding: 1.5rem;
+      min-height: 120px;
+      margin-top: 1rem;
     }
+    
     .advice-item {
-      padding: 10px;
-      margin: 8px 0;
-      background: #e8f4f8;
-      border-left: 3px solid #667eea;
-      border-radius: 4px;
+      background: var(--background-color);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 1rem 1.25rem;
+      margin-bottom: 0.75rem;
+      transition: all 0.2s ease;
+      position: relative;
+    }
+    
+    .advice-item:hover {
+      border-color: var(--primary-color);
+      box-shadow: var(--shadow-sm);
+    }
+    
+    .advice-item:last-child {
+      margin-bottom: 0;
     }
     .sensor-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 15px;
-      margin-top: 15px;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1rem;
+      margin-top: 1.5rem;
     }
+    
     .sensor-input {
-      display: flex;
-      flex-direction: column;
+      background: var(--background-color);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: 1.25rem;
+      transition: all 0.2s ease;
     }
+    
+    .sensor-input:hover {
+      border-color: var(--primary-color);
+      box-shadow: var(--shadow-sm);
+    }
+    
+    .sensor-input:focus-within {
+      border-color: var(--primary-color);
+      box-shadow: 0 0 0 3px rgba(46, 125, 50, 0.1);
+    }
+    
     .sensor-input label {
-      min-width: auto;
-      margin-bottom: 5px;
-      font-size: 13px;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 0.75rem;
+      font-weight: 500;
+      color: var(--text-primary);
+      font-size: 0.875rem;
     }
+    
+    .sensor-input input {
+      width: 100%;
+      margin: 0;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 0.75rem;
+      font-size: 0.875rem;
+    }
+    
+    .sensor-input .unit {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      margin-top: 0.5rem;
+      line-height: 1.4;
+    }
+    
+    .sensor-input input.input-success {
+      border-color: #4caf50;
+      background: #e8f5e9;
+    }
+    
+    .sensor-input input.input-warning {
+      border-color: #ff9800;
+      background: #fff8e1;
+    }
+    
+    .sensor-input input.input-danger {
+      border-color: #f44336;
+      background: #ffebee;
+    }
+    /* 响应式设计 */
+    @media (max-width: 1200px) {
+      .container {
+        margin: 0.5rem;
+      }
+      .main-content {
+        padding: 0 1.5rem 1.5rem;
+      }
+      .header {
+        padding: 1.5rem 1.5rem 1rem;
+      }
+    }
+    
+    @media (max-width: 768px) {
+      body {
+        padding: 0.5rem;
+      }
+      
+      .container {
+        border-radius: var(--radius-lg);
+      }
+      
+      .header {
+        padding: 1rem;
+      }
+      
+      .main-content {
+        padding: 0 1rem 1rem;
+      }
+      
+      .tabs {
+        flex-wrap: wrap;
+        gap: 0.25rem;
+      }
+      
+      .tab {
+        flex: none;
+        min-width: auto;
+        padding: 0.625rem 1rem;
+        font-size: 0.8125rem;
+      }
+      
+      .sensor-grid {
+        grid-template-columns: 1fr;
+        gap: 0.75rem;
+      }
+      
+      .chart-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+      }
+      
+      .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+      
+      .form-group {
+        flex-direction: column;
+        align-items: stretch;
+      }
+      
+      label {
+        min-width: auto;
+      }
+    }
+    
+    @media (max-width: 480px) {
+      .header {
+        padding: 0.75rem;
+      }
+      
+      .main-content {
+        padding: 0 0.75rem 0.75rem;
+      }
+      
+      .section-content {
+        padding: 0 1rem 1rem;
+      }
+      
+      .section-header {
+        padding: 1rem 1rem 0;
+      }
+      
+      h1 {
+        font-size: 1.5rem;
+      }
+      
+      .subtitle {
+        font-size: 0.875rem;
+      }
+      
+      .btn, button {
+        padding: 0.625rem 1rem;
+        font-size: 0.8125rem;
+      }
+      
+      .stats-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+    
+    /* 深色模式支持 */
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg-primary: #F0B400;    /* 金黄色 - 主背景 */
+        --bg-secondary: #2A5200;  /* 深绿色 - 次要背景 */
+        --bg-accent1: #038056;    /* 青绿色 - 强调色1 */
+        --bg-accent2: #039688;    /* 蓝绿色 - 强调色2 */
+        --bg-light: #ffffff;     /* 白色 - 浅色背景 */
+        
+        --text-primary: #797979;  /* 主文字颜色 */
+        --text-light: #ffffff;    /* 白色文字 */
+        --text-dark: #333333;     /* 深色文字 */
+      }
+      
+      body {
+        background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 50%, var(--bg-accent1) 100%);
+        color: var(--text-primary);
+      }
+      
+      .container {
+        background: var(--bg-light);
+        border-color: var(--bg-accent2);
+      }
+    }
+    
+    /* 打印样式 */
+    @media print {
+      body {
+        background: white;
+        padding: 0;
+      }
+      
+      .container {
+        box-shadow: none;
+        border: none;
+        border-radius: 0;
+      }
+      
+      .tabs {
+        display: none;
+      }
+      
+      .tab-content {
+        display: block !important;
+      }
+      
+      .btn, button {
+        display: none;
+      }
+    }
+    
+    /* 高对比度模式 */
+    @media (prefers-contrast: high) {
+      .container {
+        border: 2px solid #222222;
+      }
+      
+      .section {
+        border: 1px solid #222222;
+      }
+      
+      .btn, button {
+        border: 2px solid currentColor;
+      }
+    }
+    
+    /* 减少动画模式 */
+    @media (prefers-reduced-motion: reduce) {
+      * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+    
+    /* 强制浅色模式文字颜色 */
+    @media (prefers-color-scheme: light), (prefers-color-scheme: no-preference) {
+      h1, h2, h3, h4, h5, h6 {
+        color: #797979 !important;
+      }
+      
+      label {
+        color: #797979 !important;
+      }
+      
+      .subtitle {
+        color: var(--text-light) !important;
+      }
+      
+      p, span, div {
+        color: #797979 !important;
+      }
+    }
+    
     .tabs {
       display: flex;
-      gap: 10px;
-      margin-bottom: 20px;
-      border-bottom: 2px solid #ddd;
+      background: var(--hover-color);
+      border-radius: var(--radius-lg);
+      padding: 0.25rem;
+      margin-bottom: 2rem;
+      border: 1px solid var(--border-color);
+      overflow-x: auto;
+      gap: 0.25rem;
     }
+    
     .tab {
-      padding: 10px 20px;
-      cursor: pointer;
-      background: none;
+      flex: 1;
+      min-width: fit-content;
+      padding: 0.75rem 1.5rem;
+      background: transparent;
       border: none;
-      color: #666;
-      font-size: 16px;
-      border-bottom: 3px solid transparent;
+      border-radius: var(--radius-md);
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.2s ease;
+      white-space: nowrap;
+      position: relative;
     }
+    
+    .tab:hover {
+      color: var(--text-primary);
+      background: var(--background-color);
+    }
+    
     .tab.active {
-      color: #667eea;
-      border-bottom-color: #667eea;
+      background: var(--primary-color);
+      color: var(--text-light);
+      box-shadow: var(--shadow-sm);
+      font-weight: 600;
     }
+    
     .tab-content {
       display: none;
+      animation: fadeIn 0.3s ease-out;
     }
+    
     .tab-content.active {
       display: block;
     }
-    .error {
-      color: #d32f2f;
-      background: #ffebee;
-      padding: 10px;
-      border-radius: 4px;
-      margin-top: 10px;
+    
+    @keyframes fadeIn {
+      from { 
+        opacity: 0; 
+        transform: translateY(8px); 
+      }
+      to { 
+        opacity: 1; 
+        transform: translateY(0); 
+      }
     }
-    .success {
-      color: #2e7d32;
+    .alert {
+      padding: 1rem 1.25rem;
+      border-radius: var(--radius-md);
+      margin-top: 1rem;
+      border: 1px solid;
+      font-size: 0.875rem;
+    }
+    
+    .alert-error {
+      background: #ffebee;
+      border-color: #ffcdd2;
+      color: #d32f2f;
+    }
+    
+    .alert-success {
       background: #e8f5e9;
-      padding: 10px;
-      border-radius: 4px;
-      margin-top: 10px;
+      border-color: #c8e6c9;
+      color: #2e7d32;
+    }
+    
+    .alert-warning {
+      background: #fff8e1;
+      border-color: #ffecb3;
+      color: #f57c00;
+    }
+    
+    .alert-info {
+      background: #e3f2fd;
+      border-color: #bbdefb;
+      color: #1976d2;
+    }
+    
+    /* Legacy support */
+    .error {
+      background: #ffebee;
+      border: 1px solid #ffcdd2;
+      color: #d32f2f;
+      padding: 1rem 1.25rem;
+      border-radius: var(--radius-md);
+      margin-top: 1rem;
+    }
+    
+    .success {
+      background: #e8f5e9;
+      border: 1px solid #c8e6c9;
+      color: #2e7d32;
+      padding: 1rem 1.25rem;
+      border-radius: var(--radius-md);
+      margin-top: 1rem;
     }
     .stat-card {
       background: white;
-      padding: 20px;
-      border-radius: 8px;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      border: 1px solid #f0f0f0;
+      border-radius: var(--radius-lg);
+      padding: 1.5rem;
       text-align: center;
-      border-left: 4px solid #667eea;
+      transition: all 0.2s ease;
+      box-shadow: var(--shadow-sm);
     }
+    
+    .stat-card:hover {
+      border-color: #e0e0e0;
+      box-shadow: var(--shadow-md);
+      transform: translateY(-2px);
+    }
+    
     .stat-card h4 {
-      margin: 0 0 10px 0;
-      color: #555;
-      font-size: 14px;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: #555555;
+      margin-bottom: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
     }
+    
     .stat-value {
-      font-size: 18px;
-      font-weight: bold;
-      color: #333;
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: #222222;
+      line-height: 1.2;
     }
     .chart-container {
       position: relative;
-      height: 300px;
-      margin: 20px 0;
+      height: 350px;
+      margin: 25px 0;
+      background: white;
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+      transition: all 0.3s ease;
+    }
+    .chart-container:hover {
+      box-shadow: 0 8px 30px rgba(0,0,0,0.12);
     }
     .loading-spinner {
       display: inline-block;
-      width: 20px;
-      height: 20px;
-      border: 3px solid #f3f3f3;
-      border-top: 3px solid #667eea;
+      width: 1rem;
+      height: 1rem;
+      border: 2px solid #e0e0e0;
+      border-top: 2px solid var(--bg-accent2);
       border-radius: 50%;
       animation: spin 1s linear infinite;
+      margin-right: 0.5rem;
     }
+    
     @keyframes spin {
       0% { transform: rotate(0deg); }
       100% { transform: rotate(360deg); }
+    }
+    
+    /* Chart containers */
+    .chart-container {
+      background: white;
+      border: 1px solid #f0f0f0;
+      border-radius: var(--radius-lg);
+      padding: 1.5rem;
+      margin: 1rem 0;
+      box-shadow: var(--shadow-sm);
+    }
+    
+    .chart-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+      gap: 1.5rem;
+      margin-bottom: 2rem;
+    }
+    
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
     }
     .alert-overview {
       margin: 20px 0;
@@ -227,7 +813,7 @@
     }
     .status-text p {
       margin: 0;
-      color: #666;
+      color: #333;
     }
     .alert-details {
       background: white;
@@ -268,7 +854,7 @@
     }
     .alert-content p {
       margin: 0;
-      color: #666;
+      color: #333;
       font-size: 14px;
     }
     .alert-value {
@@ -286,7 +872,7 @@
       padding: 12px;
       margin: 8px 0;
       background: #e8f5e9;
-      border-left: 3px solid #28a745;
+      border-left: 3px solid var(--bg-accent1);
       border-radius: 4px;
     }
     .threshold-info {
@@ -306,68 +892,103 @@
     .threshold-card p {
       margin: 5px 0;
       font-size: 13px;
-      color: #666;
+      color: #333;
+    }
+  </style>
+  
+  <!-- 简化的文字颜色修复 -->
+  <style>
+    /* 确保文字颜色统一 */
+    h1, h2, h3, h4, h5, h6 {
+      color: var(--text-primary) !important;
+    }
+    
+    label {
+      color: var(--text-primary) !important;
+    }
+    
+    .subtitle {
+      color: var(--text-light) !important;
+    }
+    
+    /* 更新所有内容文字颜色 */
+    p, span, div, small {
+      color: var(--text-primary);
+    }
+    
+    /* 图表和卡片背景更新 */
+    .chart-container,
+    .stat-card,
+    .advice-item,
+    .result-box {
+      background: var(--background-color) !important;
+      border: 1px solid var(--border-color) !important;
     }
   </style>
 </head>
 <body>
   <div class="container">
-    <h1>🌾 作物生长状态管理与决策支持系统</h1>
-    
-    <div class="section" style="margin-top:10px;">
-      <h3>👤 选择用户（演示用）</h3>
-      <div class="form-group">
-        <label>用户：</label>
-        <select id="userSelect">
-          <option value="">全部用户</option>
-        </select>
-        <small style="color:#777;">选择用户后将只显示其地块</small>
+    <div class="header">
+      <h1>🌾 CropPilot</h1>
+      <p class="subtitle">智能农业决策支持系统</p>
+      
+      <div class="user-selector">
+        <div class="form-group">
+          <label>选择用户</label>
+          <select id="userSelect">
+            <option value="">全部用户</option>
+          </select>
+          <small>选择用户后将只显示其地块</small>
+        </div>
       </div>
     </div>
     
-    <div class="tabs">
-      <button class="tab active" onclick="switchTab('advice')">农事建议</button>
-      <button class="tab" onclick="switchTab('smart')">智能咨询</button>
-      <button class="tab" onclick="switchTab('sensor')">传感器数据</button>
-      <button class="tab" onclick="switchTab('charts')">数据可视化</button>
-      <button class="tab" onclick="switchTab('alerts')">异常预警</button>
-      <button class="tab" onclick="switchTab('history')">历史记录</button>
-    </div>
+    <div class="main-content">
+      <div class="tabs">
+        <button class="tab active" onclick="switchTab('advice')">🌾 农事建议</button>
+        <button class="tab" onclick="switchTab('smart')">🤖 智能咨询</button>
+        <button class="tab" onclick="switchTab('sensor')">📊 传感器数据</button>
+        <button class="tab" onclick="switchTab('charts')">📈 数据可视化</button>
+        <button class="tab" onclick="switchTab('alerts')">🚨 异常预警</button>
+        <button class="tab" onclick="switchTab('history')">📜 历史记录</button>
+      </div>
 
     <!-- 农事建议标签页 -->
     <div id="advice-tab" class="tab-content active">
       <div class="section">
-        <h2>📋 第一步：选择地块 / 作物 / 生长阶段</h2>
-        <div class="form-group">
-          <label>地块：</label>
-          <select id="fieldSelect">
-            <option value="">请选择地块</option>
-          </select>
-          <small style="color:#777;">(推荐) 选择地块后自动带出作物</small>
+        <div class="section-header">
+          <h2>🌱 获取农事建议</h2>
         </div>
-        <div class="form-group">
-          <label>作物类型：</label>
-          <select id="cropSelect">
-            <option value="水稻">水稻</option>
-            <option value="玉米">玉米</option>
-          </select>
+        <div class="section-content">
+          <div class="form-group">
+            <label>地块</label>
+            <select id="fieldSelect">
+              <option value="">请选择地块</option>
+            </select>
+            <small>选择地块后自动带出作物类型</small>
+          </div>
           
-          <label>生长阶段：</label>
-          <select id="stageSelect">
-            <option value="分蘖期">分蘖期</option>
-            <option value="拔节期">拔节期</option>
-            <option value="抽穗期">抽穗期</option>
-            <option value="抽穗扬花期">抽穗扬花期</option>
-          </select>
+          <div class="form-group">
+            <label>作物类型</label>
+            <select id="cropSelect">
+              <option value="水稻">水稻</option>
+              <option value="玉米">玉米</option>
+            </select>
+            
+            <label>生长阶段</label>
+            <select id="stageSelect">
+              <option value="分蘖期">分蘖期</option>
+              <option value="拔节期">拔节期</option>
+              <option value="抽穗期">抽穗期</option>
+              <option value="抽穗扬花期">抽穗扬花期</option>
+            </select>
+            
+            <button onclick="getAdvice()" class="btn btn-primary">获取建议</button>
+          </div>
           
-          <button onclick="getAdvice()">获取农事建议</button>
-        </div>
-      </div>
-      
-      <div class="section">
-        <h3>💡 系统建议</h3>
-        <div id="adviceResult" class="result-box">
-          <p style="color: #999;">建议将显示在这里...</p>
+          <div id="adviceResult" class="result-box">
+            <p>农事建议将显示在这里...</p>
+          </div>
         </div>
       </div>
     </div>
@@ -375,41 +996,41 @@
     <!-- 智能咨询标签页 -->
     <div id="smart-tab" class="tab-content">
       <div class="section">
-        <h2>🤖 智能农业咨询</h2>
-        <p style="color:#777; margin-bottom:15px;">基于农业知识库的智能问答系统，支持自然语言查询</p>
-        
-        <div class="form-group">
-          <label>选择地块：</label>
-          <select id="smartFieldSelect">
-            <option value="">请选择地块（可选）</option>
-          </select>
+        <div class="section-header">
+          <h2>🤖 智能农业咨询</h2>
+          <p style="margin-top: 0.5rem;">基于农业知识库的智能问答系统，支持自然语言查询</p>
         </div>
-        
-        <div class="form-group">
-          <label>咨询问题：</label>
-          <textarea id="smartQuestion" rows="3" style="width:100%; padding:8px; border:1px solid #ddd; border-radius:4px;" 
-                    placeholder="例如：水稻叶子发黄怎么办？玉米拔节期如何施肥？高温天气注意什么？"></textarea>
-        </div>
-        
-        <div style="margin-top: 15px;">
-          <button onclick="getSmartAdvice()" style="background: #28a745;">🔍 智能咨询</button>
-          <button onclick="clearSmartQuery()" style="background: #6c757d; margin-left: 10px;">清空</button>
-        </div>
-        
-        <div class="section" style="margin-top: 20px;">
-          <h3>💡 智能建议</h3>
-          <div id="smartResult" class="result-box">
-            <p style="color: #999;">智能建议将显示在这里...</p>
+        <div class="section-content">
+          <div class="form-group">
+            <label>选择地块</label>
+            <select id="smartFieldSelect">
+              <option value="">请选择地块（可选）</option>
+            </select>
           </div>
-        </div>
-        
-        <div class="section" style="background: #f8f9fa; border-left-color: #17a2b8;">
-          <h3>💬 常见问题示例</h3>
-          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px;">
-            <button onclick="setSmartQuestion('叶子发黄怎么办')" style="background: #17a2b8; font-size: 12px;">叶子发黄怎么办</button>
-            <button onclick="setSmartQuestion('如何防治病虫害')" style="background: #17a2b8; font-size: 12px;">如何防治病虫害</button>
-            <button onclick="setSmartQuestion('高温干旱应对措施')" style="background: #17a2b8; font-size: 12px;">高温干旱应对</button>
-            <button onclick="setSmartQuestion('土壤pH值调节')" style="background: #17a2b8; font-size: 12px;">土壤pH调节</button>
+          
+          <div class="form-group">
+            <label>咨询问题</label>
+            <textarea id="smartQuestion" rows="3" 
+                      placeholder="例如：水稻叶子发黄怎么办？玉米拔节期如何施肥？高温天气注意什么？"></textarea>
+          </div>
+          
+          <div style="display: flex; gap: 0.75rem; margin-top: 1rem;">
+            <button onclick="getSmartAdvice()" class="btn btn-primary">🔍 智能咨询</button>
+            <button onclick="clearSmartQuery()" class="btn btn-secondary">清空</button>
+          </div>
+          
+          <div id="smartResult" class="result-box" style="margin-top: 1.5rem;">
+            <p>智能建议将显示在这里...</p>
+          </div>
+          
+          <div style="margin-top: 1.5rem; padding: 1rem; background: var(--hover-color); border-radius: var(--radius-md);">
+            <h4 style="margin-bottom: 0.75rem;">💬 常见问题示例</h4>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 0.5rem;">
+              <button onclick="setSmartQuestion('叶子发黄怎么办')" class="btn btn-secondary" style="font-size: 0.75rem;">叶子发黄怎么办</button>
+              <button onclick="setSmartQuestion('如何防治病虫害')" class="btn btn-secondary" style="font-size: 0.75rem;">如何防治病虫害</button>
+              <button onclick="setSmartQuestion('高温干旱应对措施')" class="btn btn-secondary" style="font-size: 0.75rem;">高温干旱应对</button>
+              <button onclick="setSmartQuestion('土壤pH值调节')" class="btn btn-secondary" style="font-size: 0.75rem;">土壤pH调节</button>
+            </div>
           </div>
         </div>
       </div>
@@ -441,9 +1062,9 @@
           </select>
         </div>
 
-        <div class="section" style="background: #fff; border-left-color: #28a745; border: 1px solid #e5e5e5; margin-top: 10px;">
+        <div class="section" style="margin-top: 10px;">
           <h3>🖼 上传作物图片</h3>
-          <p style="color:#777; margin-bottom:10px;">先选择上方地块，再上传图片（自动保存到系统并记录路径与时间）。</p>
+          <p style="margin-bottom:10px;">先选择上方地块，再上传图片（自动保存到系统并记录路径与时间）。</p>
           <div class="form-group">
             <label>拍摄时间：</label>
             <input type="datetime-local" id="capturedAt">
@@ -458,46 +1079,62 @@
         
         <div class="sensor-grid">
           <div class="sensor-input">
-            <label>温度 (°C):</label>
+            <label>🌡️ 温度:</label>
             <input type="number" id="temperature" step="0.1" placeholder="例如: 25.5">
+            <div class="unit">单位: °C | 正常范围: 15-35°C</div>
           </div>
           <div class="sensor-input">
-            <label>湿度 (%):</label>
+            <label>💧 湿度:</label>
             <input type="number" id="humidity" step="0.1" placeholder="例如: 65.0">
+            <div class="unit">单位: % | 正常范围: 40-95%</div>
           </div>
           <div class="sensor-input">
-            <label>土壤湿度 (%):</label>
+            <label>🌱 土壤湿度:</label>
             <input type="number" id="soilMoisture" step="0.1" placeholder="例如: 70.0">
+            <div class="unit">单位: % | 正常范围: 50-95%</div>
           </div>
           <div class="sensor-input">
-            <label>光照强度 (lux):</label>
+            <label>☀️ 光照强度:</label>
             <input type="number" id="lightIntensity" step="0.1" placeholder="例如: 50000">
+            <div class="unit">单位: lux | 正常范围: 10000-120000</div>
           </div>
           <div class="sensor-input">
-            <label>pH值:</label>
+            <label>⚗️ pH值:</label>
             <input type="number" id="phValue" step="0.1" placeholder="例如: 6.5">
+            <div class="unit">范围: 5.5-8.0 | 最适: 6.0-7.5</div>
           </div>
           <div class="sensor-input">
-            <label>氮含量 (mg/kg):</label>
+            <label>🟦 氮含量:</label>
             <input type="number" id="nitrogen" step="0.1" placeholder="例如: 150.0">
+            <div class="unit">单位: mg/kg | 正常范围: 80-300</div>
           </div>
           <div class="sensor-input">
-            <label>磷含量 (mg/kg):</label>
+            <label>🟨 磷含量:</label>
             <input type="number" id="phosphorus" step="0.1" placeholder="例如: 80.0">
+            <div class="unit">单位: mg/kg | 正常范围: 30-180</div>
           </div>
           <div class="sensor-input">
-            <label>钾含量 (mg/kg):</label>
+            <label>🟥 钾含量:</label>
             <input type="number" id="potassium" step="0.1" placeholder="例如: 120.0">
+            <div class="unit">单位: mg/kg | 正常范围: 60-250</div>
           </div>
           <div class="sensor-input">
-            <label>位置/地块:</label>
+            <label>📍 位置/地块:</label>
             <input type="text" id="location" placeholder="例如: A区-1号田">
+            <div class="unit">描述传感器安装位置</div>
           </div>
         </div>
         
-        <div style="margin-top: 20px;">
-          <button onclick="saveSensorData()">保存传感器数据</button>
-          <button onclick="getAdviceWithSensor()" style="background: #28a745; margin-left: 10px;">基于数据获取建议</button>
+        <div style="margin-top: 25px; display: flex; gap: 15px; flex-wrap: wrap;">
+          <button onclick="saveSensorData()" style="background: linear-gradient(135deg, var(--bg-secondary), var(--bg-accent1));">
+            💾 保存传感器数据
+          </button>
+          <button onclick="getAdviceWithSensor()" style="background: linear-gradient(135deg, var(--bg-accent2), var(--bg-accent1));">
+            🤖 基于数据获取建议
+          </button>
+          <button onclick="clearSensorData()" style="background: linear-gradient(135deg, var(--bg-primary), var(--bg-secondary));">
+            🗑️ 清空数据
+          </button>
         </div>
         
         <div id="sensorResult"></div>
@@ -508,7 +1145,7 @@
     <div id="charts-tab" class="tab-content">
       <div class="section">
         <h2>📊 数据可视化分析</h2>
-        <p style="color:#777; margin-bottom:15px;">传感器数据趋势图表和统计分析</p>
+        <p style="margin-bottom:15px;">传感器数据趋势图表和统计分析</p>
         
         <div class="form-group">
           <label>选择地块：</label>
@@ -521,14 +1158,14 @@
             <option value="30">最近30天</option>
             <option value="90">最近90天</option>
           </select>
-          <button onclick="loadChartData()" style="background: #17a2b8;">📈 加载图表</button>
-          <button onclick="refreshCharts()" style="background: #28a745; margin-left: 10px;">🔄 刷新</button>
+          <button onclick="loadChartData()" style="background: var(--bg-accent2);">📈 加载图表</button>
+          <button onclick="refreshCharts()" style="background: var(--bg-accent1); margin-left: 10px;">🔄 刷新</button>
         </div>
         
-        <div class="form-group" style="margin-top: 15px; padding: 10px; background: #fff3cd; border-radius: 4px; border-left: 4px solid #ffc107;">
-          <label style="color: #856404;">演示功能：</label>
-          <button onclick="generateDemoData()" style="background: #ffc107; color: #212529;">🎲 生成演示数据</button>
-          <small style="color: #856404; margin-left: 10px;">为选中的地块生成7天的模拟传感器数据用于图表演示</small>
+        <div class="form-group" style="margin-top: 15px; padding: 10px; background: var(--accent-color); border-radius: 4px; opacity: 0.8;">
+          <label style="color: white;">演示功能：</label>
+          <button onclick="generateDemoData()" style="background: var(--primary-color); color: white;">🎲 生成演示数据</button>
+          <small style="color: white; margin-left: 10px;">为选中的地块生成7天的模拟传感器数据用于图表演示</small>
         </div>
       </div>
 
@@ -583,7 +1220,7 @@
         </div>
       </div>
 
-      <div id="chartLoadingMessage" style="text-align: center; padding: 40px; color: #999;">
+      <div id="chartLoadingMessage" style="text-align: center; padding: 40px; color: #333;">
         <p>📊 选择地块并点击"加载图表"查看数据可视化</p>
       </div>
     </div>
@@ -592,21 +1229,21 @@
     <div id="alerts-tab" class="tab-content">
       <div class="section">
         <h2>🚨 异常检测与预警</h2>
-        <p style="color:#777; margin-bottom:15px;">实时监测传感器数据异常，提供智能预警和处理建议</p>
+        <p style="margin-bottom:15px;">实时监测传感器数据异常，提供智能预警和处理建议</p>
         
         <div class="form-group">
           <label>选择地块：</label>
           <select id="alertFieldSelect">
             <option value="">请选择地块</option>
           </select>
-          <button onclick="checkFieldAlerts()" style="background: #dc3545;">🔍 检查预警</button>
-          <button onclick="refreshAlerts()" style="background: #28a745; margin-left: 10px;">🔄 刷新</button>
+          <button onclick="checkFieldAlerts()" style="background: var(--bg-secondary);">🔍 检查预警</button>
+          <button onclick="refreshAlerts()" style="background: var(--bg-accent1); margin-left: 10px;">🔄 刷新</button>
         </div>
         
-        <div class="form-group" style="margin-top: 15px; padding: 10px; background: #e3f2fd; border-radius: 4px; border-left: 4px solid #2196f3;">
-          <label style="color: #1565c0;">实时检测：</label>
-          <button onclick="enableAutoCheck()" id="autoCheckBtn" style="background: #2196f3; color: white;">🔄 启用自动检测</button>
-          <small style="color: #1565c0; margin-left: 10px;">每30秒自动检查一次预警状态</small>
+        <div class="form-group" style="margin-top: 15px; padding: 10px; background: var(--hover-color); border-radius: 4px; border-left: 4px solid var(--primary-color);">
+          <label>实时检测：</label>
+          <button onclick="enableAutoCheck()" id="autoCheckBtn" style="background: var(--primary-color); color: white;">🔄 启用自动检测</button>
+          <small style="margin-left: 10px;">每30秒自动检查一次预警状态</small>
         </div>
       </div>
 
@@ -628,7 +1265,7 @@
       <div class="section">
         <h3>⚠️ 详细预警信息</h3>
         <div id="alertDetails" class="alert-details">
-          <p style="color: #999; text-align: center; padding: 20px;">预警详情将显示在这里...</p>
+          <p style="color: #333; text-align: center; padding: 20px;">预警详情将显示在这里...</p>
         </div>
       </div>
 
@@ -636,7 +1273,7 @@
       <div class="section">
         <h3>💡 处理建议</h3>
         <div id="alertRecommendations" class="alert-recommendations">
-          <p style="color: #999; text-align: center; padding: 20px;">处理建议将显示在这里...</p>
+          <p style="color: #333; text-align: center; padding: 20px;">处理建议将显示在这里...</p>
         </div>
       </div>
 
@@ -701,7 +1338,7 @@
         </div>
         
         <div id="historyResult" class="result-box">
-          <p style="color: #999;">历史记录将显示在这里...</p>
+          <p style="color: #333;">历史记录将显示在这里...</p>
         </div>
       </div>
     </div>
@@ -799,7 +1436,13 @@
       const crop = document.getElementById('cropSelect').value;
       const stage = document.getElementById('stageSelect').value;
       
-      document.getElementById('adviceResult').innerHTML = '<p>正在加载...</p>';
+      const resultDiv = document.getElementById('adviceResult');
+      resultDiv.innerHTML = `
+        <div style="text-align: center; padding: 25px;">
+          <span class="loading-spinner"></span>
+          <p style="margin-top: 15px; color: var(--text-primary); font-weight: 500;">📋 正在生成农事建议...</p>
+        </div>
+      `;
 
       const params = new URLSearchParams();
       if (fieldId) params.append('field_id', fieldId);
@@ -810,22 +1453,41 @@
         .then(response => response.json())
         .then(data => {
           if (data.status === 'success') {
-            let html = `<p style="font-size: 18px; margin-bottom: 15px;"><strong>${data.crop} - ${data.stage}</strong></p>`;
+            let html = `
+              <div style="background: linear-gradient(135deg, var(--bg-light), var(--bg-primary)); padding: 20px; border-radius: 12px; margin-bottom: 20px; border-left: 4px solid var(--bg-accent1);">
+                <h4 style="color: var(--text-primary); margin: 0 0 10px 0; display: flex; align-items: center; gap: 10px;">
+                  🌾 ${data.crop} - ${data.stage}
+                  <span style="background: var(--bg-accent1); color: white; padding: 4px 8px; border-radius: 12px; font-size: 12px; font-weight: normal;">专业建议</span>
+                </h4>
+              </div>
+            `;
+            
             if (data.advice && data.advice.length > 0) {
-              data.advice.forEach(item => {
-                html += `<div class="advice-item">${item}</div>`;
+              data.advice.forEach((item, index) => {
+                html += `
+                  <div class="advice-item" style="animation: slideIn 0.3s ease-out ${index * 0.1}s both;">
+                    <div style="display: flex; align-items: flex-start; gap: 12px;">
+                      <span style="background: var(--bg-accent2); color: white; border-radius: 50%; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: bold; flex-shrink: 0;">${index + 1}</span>
+                      <div style="flex: 1;">${item}</div>
+                    </div>
+                  </div>
+                `;
               });
             } else {
-              html += '<p>暂无建议</p>';
+              html += '<div class="advice-item">暂无具体建议，请联系农技专家获取更多指导。</div>';
             }
-            document.getElementById('adviceResult').innerHTML = html;
+            
+            resultDiv.innerHTML = html;
+            showNotification('农事建议获取成功', 'success');
           } else {
-            document.getElementById('adviceResult').innerHTML = '<div class="error">获取建议失败</div>';
+            resultDiv.innerHTML = '<div class="error">❌ 获取建议失败，请稍后重试</div>';
+            showNotification('获取建议失败', 'error');
           }
         })
         .catch(error => {
           console.error('错误:', error);
-          document.getElementById('adviceResult').innerHTML = '<div class="error">请求失败，请确保后端服务已启动。</div>';
+          resultDiv.innerHTML = '<div class="error">❌ 请求失败，请确保后端服务已启动</div>';
+          showNotification('请求失败，请检查网络连接', 'error');
         });
     }
 
@@ -908,7 +1570,7 @@
                 html += `<div class="advice-item" style="margin-bottom: 15px;">`;
                 html += `<p><strong>${record.crop_type} - ${record.growth_stage}</strong></p>`;
                 html += `<p>${record.advice}</p>`;
-                html += `<p style="color: #999; font-size: 12px;">${record.created_at}</p>`;
+                html += `<p style="color: #333; font-size: 12px;">${record.created_at}</p>`;
                 html += `</div>`;
               });
             } else {
@@ -953,11 +1615,20 @@
       const question = document.getElementById('smartQuestion').value.trim();
       
       if (!question) {
-        document.getElementById('smartResult').innerHTML = '<div class="error">请输入咨询问题</div>';
+        showNotification('请输入咨询问题', 'warning');
+        document.getElementById('smartResult').innerHTML = '<div class="error">❌ 请输入咨询问题</div>';
         return;
       }
       
-      document.getElementById('smartResult').innerHTML = '<p>🤖 正在分析您的问题...</p>';
+      // 显示加载状态
+      const resultDiv = document.getElementById('smartResult');
+      resultDiv.innerHTML = `
+        <div style="text-align: center; padding: 30px;">
+          <span class="loading-spinner"></span>
+          <p style="margin-top: 15px; color: var(--text-primary); font-weight: 500;">🤖 AI正在分析您的问题...</p>
+          <p style="margin-top: 5px; color: #888; font-size: 14px;">这可能需要几秒钟时间</p>
+        </div>
+      `;
       
       // 获取地块信息以确定作物类型
       let cropType = '';
@@ -986,27 +1657,42 @@
         .then(data => {
           if (data.status === 'success') {
             // 格式化智能建议显示
-            let html = `<div style="background: #e8f5e9; padding: 15px; border-radius: 8px; margin-bottom: 15px;">`;
-            html += `<h4 style="color: #2e7d32; margin: 0 0 10px 0;">🤖 智能分析结果</h4>`;
-            html += `<p><strong>问题：</strong>${data.question}</p>`;
-            if (data.crop_type) {
-              html += `<p><strong>作物：</strong>${data.crop_type}</p>`;
-            }
-            html += `</div>`;
+            let html = `
+              <div style="background: linear-gradient(135deg, var(--bg-light), var(--bg-primary)); padding: 20px; border-radius: 12px; margin-bottom: 20px; border-left: 4px solid var(--bg-accent1);">
+                <h4 style="color: var(--text-primary); margin: 0 0 15px 0; display: flex; align-items: center; gap: 10px;">
+                  🤖 AI智能分析结果
+                  <span style="background: var(--bg-accent1); color: white; padding: 4px 8px; border-radius: 12px; font-size: 12px; font-weight: normal;">智能回答</span>
+                </h4>
+                <div style="background: var(--bg-light); padding: 15px; border-radius: 8px; margin-bottom: 15px; border: 2px solid var(--bg-accent2);">
+                  <p style="margin: 0; color: var(--text-primary);"><strong>💬 问题：</strong>${data.question}</p>
+                  ${data.crop_type ? `<p style="margin: 8px 0 0 0; color: var(--text-primary);"><strong>🌱 作物：</strong>${data.crop_type}</p>` : ''}
+                </div>
+              </div>
+            `;
             
             // 显示建议内容
-            html += `<div style="white-space: pre-line; line-height: 1.6;">${data.advice}</div>`;
+            html += `
+              <div style="background: var(--bg-light); padding: 25px; border-radius: 12px; box-shadow: 0 2px 15px rgba(0,0,0,0.08); border: 2px solid var(--bg-accent2);">
+                <h4 style="color: var(--text-primary); margin: 0 0 15px 0; display: flex; align-items: center; gap: 8px;">
+                  💡 专业建议
+                </h4>
+                <div style="white-space: pre-line; line-height: 1.8; color: #444; font-size: 15px;">${data.advice}</div>
+              </div>
+            `;
             
-            document.getElementById('smartResult').innerHTML = html;
+            resultDiv.innerHTML = html;
+            showNotification('智能咨询完成', 'success');
           } else {
-            document.getElementById('smartResult').innerHTML = 
-              `<div class="error">智能咨询失败: ${data.message || '未知错误'}</div>`;
+            resultDiv.innerHTML = 
+              `<div class="error">❌ 智能咨询失败: ${data.message || '未知错误'}</div>`;
+            showNotification('智能咨询失败: ' + (data.message || '未知错误'), 'error');
           }
         })
         .catch(error => {
           console.error('智能咨询错误:', error);
-          document.getElementById('smartResult').innerHTML = 
-            '<div class="error">网络请求失败，请检查连接或稍后重试</div>';
+          resultDiv.innerHTML = 
+            '<div class="error">❌ 网络请求失败，请检查连接或稍后重试</div>';
+          showNotification('网络请求失败，请检查连接', 'error');
         });
     }
     
@@ -1016,7 +1702,7 @@
     
     function clearSmartQuery() {
       document.getElementById('smartQuestion').value = '';
-      document.getElementById('smartResult').innerHTML = '<p style="color: #999;">智能建议将显示在这里...</p>';
+      document.getElementById('smartResult').innerHTML = '<p style="color: #333;">智能建议将显示在这里...</p>';
     }
 
     // 数据可视化相关函数
@@ -1026,7 +1712,7 @@
       
       if (!fieldId) {
         document.getElementById('chartLoadingMessage').innerHTML = 
-          '<p style="color: #d32f2f;">请先选择地块</p>';
+          '<p>请先选择地块</p>';
         return;
       }
       
@@ -1047,13 +1733,13 @@
             document.getElementById('chartLoadingMessage').style.display = 'none';
           } else {
             document.getElementById('chartLoadingMessage').innerHTML = 
-              '<p style="color: #999;">📊 该地块暂无传感器数据</p>';
+              '<p style="color: #333;">📊 该地块暂无传感器数据</p>';
           }
         })
         .catch(error => {
           console.error('加载图表数据失败:', error);
           document.getElementById('chartLoadingMessage').innerHTML = 
-            '<p style="color: #d32f2f;">❌ 数据加载失败</p>';
+            '<p>❌ 数据加载失败</p>';
         });
     }
     
@@ -1378,20 +2064,20 @@
         .then(data => {
           if (data.status === 'success') {
             document.getElementById('chartLoadingMessage').innerHTML = 
-              `<p style="color: #28a745;">✅ ${data.message}</p>`;
+              `<p style="color: var(--bg-accent1);">✅ ${data.message}</p>`;
             // 自动加载图表
             setTimeout(() => {
               loadChartData();
             }, 1000);
           } else {
             document.getElementById('chartLoadingMessage').innerHTML = 
-              `<p style="color: #d32f2f;">❌ 生成失败: ${data.message}</p>`;
+              `<p>❌ 生成失败: ${data.message}</p>`;
           }
         })
         .catch(error => {
           console.error('生成演示数据失败:', error);
           document.getElementById('chartLoadingMessage').innerHTML = 
-            '<p style="color: #d32f2f;">❌ 生成演示数据失败</p>';
+            '<p>❌ 生成演示数据失败</p>';
         });
     }
 
@@ -1416,7 +2102,7 @@
           } else if (data.status === 'no_data') {
             updateAlertStatus('info', 'ℹ️', '无数据', data.message);
             document.getElementById('alertDetails').innerHTML = 
-              '<p style="color: #999; text-align: center; padding: 20px;">该地块暂无传感器数据，无法进行异常检测</p>';
+              '<p style="color: #333; text-align: center; padding: 20px;">该地块暂无传感器数据，无法进行异常检测</p>';
             document.getElementById('alertRecommendations').innerHTML = 
               '<div class="recommendation-item">建议先录入一些传感器数据或生成演示数据</div>';
           } else {
@@ -1469,7 +2155,7 @@
       
       if (anomalies.length === 0) {
         detailsContainer.innerHTML = 
-          '<p style="color: #28a745; text-align: center; padding: 20px;">✅ 所有参数正常，未发现异常</p>';
+          '<p style="color: var(--bg-accent1); text-align: center; padding: 20px;">✅ 所有参数正常，未发现异常</p>';
         return;
       }
       
@@ -1499,7 +2185,7 @@
       
       if (!recommendations || recommendations.length === 0) {
         recommendationsContainer.innerHTML = 
-          '<p style="color: #999; text-align: center; padding: 20px;">暂无特殊建议</p>';
+          '<p style="color: #333; text-align: center; padding: 20px;">暂无特殊建议</p>';
         return;
       }
       
@@ -1511,7 +2197,7 @@
       });
       
       recommendationsContainer.innerHTML = html || 
-        '<p style="color: #999; text-align: center; padding: 20px;">暂无特殊建议</p>';
+        '<p style="color: #333; text-align: center; padding: 20px;">暂无特殊建议</p>';
     }
     
     function getAlertIcon(level) {
@@ -1575,7 +2261,23 @@
     function saveSensorDataWithAlert() {
       const fieldId = document.getElementById('sensorFieldSelect').value;
       if (!fieldId) {
-        document.getElementById('sensorResult').innerHTML = '<div class="error">请先选择地块</div>';
+        showNotification('请先选择地块', 'error');
+        return;
+      }
+
+      // 检查是否至少填写了一个传感器数据
+      const inputs = [
+        'temperature', 'humidity', 'soilMoisture', 'lightIntensity',
+        'phValue', 'nitrogen', 'phosphorus', 'potassium'
+      ];
+      
+      const hasData = inputs.some(id => {
+        const value = document.getElementById(id).value;
+        return value && value.trim() !== '';
+      });
+
+      if (!hasData) {
+        showNotification('请至少填写一个传感器数据', 'warning');
         return;
       }
 
@@ -1594,6 +2296,10 @@
         location: document.getElementById('location').value || null
       };
 
+      // 显示保存中状态
+      const resultDiv = document.getElementById('sensorResult');
+      resultDiv.innerHTML = '<p><span class="loading-spinner"></span> 正在保存数据...</p>';
+
       fetch('/api/save_sensor_data', {
         method: 'POST',
         headers: {
@@ -1604,20 +2310,24 @@
         .then(response => response.json())
         .then(result => {
           if (result.status === 'success') {
-            document.getElementById('sensorResult').innerHTML = 
-              '<div class="success">传感器数据保存成功！ID: ' + result.data_id + '</div>';
+            resultDiv.innerHTML = 
+              '<div class="success">✅ 传感器数据保存成功！ID: ' + result.data_id + '</div>';
+            
+            showNotification('传感器数据保存成功', 'success');
             
             // 自动检查异常
             checkSensorDataAnomalies(data);
           } else {
-            document.getElementById('sensorResult').innerHTML = 
-              '<div class="error">保存失败: ' + (result.message || '未知错误') + '</div>';
+            resultDiv.innerHTML = 
+              '<div class="error">❌ 保存失败: ' + (result.message || '未知错误') + '</div>';
+            showNotification('保存失败: ' + (result.message || '未知错误'), 'error');
           }
         })
         .catch(error => {
           console.error('错误:', error);
-          document.getElementById('sensorResult').innerHTML = 
-            '<div class="error">请求失败，请检查网络连接。</div>';
+          resultDiv.innerHTML = 
+            '<div class="error">❌ 网络请求失败，请检查连接</div>';
+          showNotification('网络请求失败，请检查连接', 'error');
         });
     }
     
@@ -1656,7 +2366,199 @@
     }
 
     // 页面加载时先拉取用户，再加载地块
-    window.addEventListener('DOMContentLoaded', loadUsers);
+    window.addEventListener('DOMContentLoaded', function() {
+      loadUsers();
+      addInputValidation();
+      addTooltips();
+    });
+
+    // 添加输入验证
+    function addInputValidation() {
+      const inputs = document.querySelectorAll('input[type="number"]');
+      inputs.forEach(input => {
+        input.addEventListener('input', function() {
+          validateInput(this);
+        });
+        input.addEventListener('blur', function() {
+          validateInput(this);
+        });
+      });
+    }
+
+    // 验证输入值
+    function validateInput(input) {
+      const value = parseFloat(input.value);
+      if (isNaN(value)) return;
+
+      const ranges = {
+        'temperature': { min: -10, max: 50, optimal: [15, 35] },
+        'humidity': { min: 0, max: 100, optimal: [40, 95] },
+        'soilMoisture': { min: 0, max: 100, optimal: [50, 95] },
+        'lightIntensity': { min: 0, max: 150000, optimal: [10000, 120000] },
+        'phValue': { min: 3, max: 10, optimal: [5.5, 8.0] },
+        'nitrogen': { min: 0, max: 500, optimal: [80, 300] },
+        'phosphorus': { min: 0, max: 300, optimal: [30, 180] },
+        'potassium': { min: 0, max: 400, optimal: [60, 250] }
+      };
+
+      const range = ranges[input.id];
+      if (!range) return;
+
+      // 移除之前的样式
+      input.classList.remove('input-warning', 'input-danger', 'input-success');
+
+      if (value < range.min || value > range.max) {
+        input.classList.add('input-danger');
+        showInputFeedback(input, '数值超出合理范围', 'danger');
+      } else if (value < range.optimal[0] || value > range.optimal[1]) {
+        input.classList.add('input-warning');
+        showInputFeedback(input, '数值偏离最适范围', 'warning');
+      } else {
+        input.classList.add('input-success');
+        showInputFeedback(input, '数值正常', 'success');
+      }
+    }
+
+    // 显示输入反馈
+    function showInputFeedback(input, message, type) {
+      // 移除现有的反馈
+      const existingFeedback = input.parentNode.querySelector('.input-feedback');
+      if (existingFeedback) {
+        existingFeedback.remove();
+      }
+
+      // 添加新的反馈
+      const feedback = document.createElement('div');
+      feedback.className = `input-feedback input-feedback-${type}`;
+      feedback.textContent = message;
+      feedback.style.fontSize = '12px';
+      feedback.style.marginTop = '4px';
+      feedback.style.padding = '4px 8px';
+      feedback.style.borderRadius = '4px';
+      
+      if (type === 'danger') {
+        feedback.style.color = '#d32f2f';
+        feedback.style.background = '#ffebee';
+      } else if (type === 'warning') {
+        feedback.style.color = '#f57c00';
+        feedback.style.background = '#fff8e1';
+      } else if (type === 'success') {
+        feedback.style.color = '#2E7D32';
+        feedback.style.background = '#ffffff';
+      }
+
+      input.parentNode.appendChild(feedback);
+
+      // 3秒后自动移除成功消息
+      if (type === 'success') {
+        setTimeout(() => {
+          if (feedback.parentNode) {
+            feedback.remove();
+          }
+        }, 3000);
+      }
+    }
+
+    // 清空传感器数据
+    function clearSensorData() {
+      if (!confirm('确定要清空所有传感器数据吗？')) {
+        return;
+      }
+
+      const inputs = [
+        'temperature', 'humidity', 'soilMoisture', 'lightIntensity',
+        'phValue', 'nitrogen', 'phosphorus', 'potassium', 'location'
+      ];
+
+      inputs.forEach(id => {
+        const input = document.getElementById(id);
+        if (input) {
+          input.value = '';
+          input.classList.remove('input-warning', 'input-danger', 'input-success');
+          // 移除反馈消息
+          const feedback = input.parentNode.querySelector('.input-feedback');
+          if (feedback) {
+            feedback.remove();
+          }
+        }
+      });
+
+      document.getElementById('sensorResult').innerHTML = '';
+      
+      // 显示清空成功消息
+      showNotification('传感器数据已清空', 'success');
+    }
+
+    // 显示通知
+    function showNotification(message, type = 'info', duration = 3000) {
+      const notification = document.createElement('div');
+      notification.className = `notification notification-${type}`;
+      notification.innerHTML = `
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <span>${getNotificationIcon(type)}</span>
+          <span>${message}</span>
+        </div>
+      `;
+      
+      // 样式
+      notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 15px 20px;
+        border-radius: 8px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+        z-index: 1000;
+        font-weight: 500;
+        animation: slideInRight 0.3s ease-out;
+        max-width: 400px;
+      `;
+
+      if (type === 'success') {
+        notification.style.background = 'linear-gradient(135deg, #ffffff, #2E7D32)';
+        notification.style.color = '#2c2c2c';
+        notification.style.border = '1px solid #2E7D32';
+      } else if (type === 'error') {
+        notification.style.background = 'linear-gradient(135deg, #ffebee, #fce4ec)';
+        notification.style.color = '#d32f2f';
+        notification.style.border = '1px solid #ffcdd2';
+      } else if (type === 'warning') {
+        notification.style.background = 'linear-gradient(135deg, #fff8e1, #fffde7)';
+        notification.style.color = '#f57c00';
+        notification.style.border = '1px solid #ffecb3';
+      } else {
+        notification.style.background = 'linear-gradient(135deg, #e3f2fd, #f3e5f5)';
+        notification.style.color = '#1976d2';
+        notification.style.border = '1px solid #bbdefb';
+      }
+
+      document.body.appendChild(notification);
+
+      // 自动移除
+      setTimeout(() => {
+        notification.style.animation = 'slideOutRight 0.3s ease-in';
+        setTimeout(() => {
+          if (notification.parentNode) {
+            notification.remove();
+          }
+        }, 300);
+      }, duration);
+    }
+
+    function getNotificationIcon(type) {
+      const icons = {
+        'success': '✅',
+        'error': '❌',
+        'warning': '⚠️',
+        'info': 'ℹ️'
+      };
+      return icons[type] || 'ℹ️';
+    }
+
+    // 添加工具提示
+    function addTooltips() {
+      // 这里可以添加更多的工具提示功能
+    }
   </script>
 </body>
 </html>

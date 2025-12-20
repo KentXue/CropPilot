@@ -60,8 +60,8 @@ python test_smart_features.py
 # 测试不同数据源
 python test_knowledge_sources.py
 
-# 测试向量搜索
-python test_vector_search.py
+# 测试异常检测功能
+python test_anomaly_detection.py
 ```
 
 ### 管理知识库

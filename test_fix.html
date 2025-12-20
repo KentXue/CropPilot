@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>文字对比度修复验证</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: #f8fafc;
+        }
+        .test-section {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .color-sample {
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 4px;
+            background: white;
+        }
+        .problem {
+            border-left: 4px solid #dc2626;
+        }
+        .fixed {
+            border-left: 4px solid #059669;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔧 CropPilot 文字对比度修复验证</h1>
+    
+    <div class="test-section problem">
+        <h2>❌ 问题演示 - 这些颜色在白色背景上几乎看不见</h2>
+        <div class="color-sample">
+            <p style="color: #f3f4f6;">这是 #f3f4f6 颜色 (gray-100) - 几乎看不见</p>
+            <p style="color: #6b7280;">这是 #6b7280 颜色 (gray-500) - 对比度不足</p>
+            <p style="color: #4b5563;">这是 #4b5563 颜色 (gray-600) - 仍然太浅</p>
+        </div>
+    </div>
+    
+    <div class="test-section fixed">
+        <h2>✅ 修复后 - 这些颜色清晰可见</h2>
+        <div class="color-sample">
+            <p style="color: #111827;">这是 #111827 颜色 (gray-900) - 清晰可见</p>
+            <p style="color: #374151;">这是 #374151 颜色 (gray-700) - 对比度良好</p>
+            <p style="color: #333;">这是 #333 颜色 - 标准深色</p>
+        </div>
+    </div>
+    
+    <div class="test-section">
+        <h2>🎯 修复说明</h2>
+        <ul>
+            <li><strong>问题原因</strong>: 深色模式CSS变量定义错误，导致浅色模式下文字变成浅色</li>
+            <li><strong>修复方法</strong>: 
+                <ol>
+                    <li>修正深色模式CSS变量映射</li>
+                    <li>添加强制浅色模式样式</li>
+                    <li>为关键元素添加 !important 内联样式</li>
+                </ol>
+            </li>
+            <li><strong>验证方法</strong>: 访问 <code>http://localhost:5000</code> 并强制刷新 (Ctrl+F5)</li>
+        </ul>
+    </div>
+    
+    <div class="test-section">
+        <h2>🔍 如果仍然有问题</h2>
+        <p>如果您仍然看到浅色文字，请尝试：</p>
+        <ol>
+            <li>清除浏览器缓存和Cookie</li>
+            <li>在隐私/无痕模式下打开页面</li>
+            <li>检查浏览器的深色模式设置</li>
+            <li>尝试不同的浏览器</li>
+        </ol>
+    </div>
+</body>
+</html>
