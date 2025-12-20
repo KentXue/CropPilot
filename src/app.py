@@ -418,15 +418,17 @@ def api_upload_crop_image():
         except Exception as e:
             print(f"获取地块信息失败: {e}")
 
-        # 尝试进行图像识别
+        # 尝试进行AI图像识别
         recognition_result = None
         try:
             from image_recognition import analyze_crop_image
+            print(f"开始AI图像识别: {saved_path}, 作物类型: {crop_type}")
             recognition_result = analyze_crop_image(saved_path, crop_type)
-        except ImportError:
-            print("图像识别模块未找到")
+            print(f"AI识别结果: {recognition_result}")
+        except ImportError as e:
+            print(f"图像识别模块导入失败: {e}")
         except Exception as e:
-            print(f"图像识别失败: {e}")
+            print(f"AI图像识别失败: {e}")
 
         # 保存到数据库
         conn = get_connection()
@@ -445,28 +447,51 @@ def api_upload_crop_image():
         response_data = {
             "status": "success",
             "image_id": image_id,
-            "image_path": f"/{relative_path}"
+            "image_path": f"/{relative_path}",
+            "crop_type": crop_type
         }
 
-        # 如果图像识别成功，添加识别结果
+        # 如果AI图像识别成功，添加识别结果
         if recognition_result and recognition_result.get('status') == 'success':
             response_data["recognition"] = recognition_result["analysis_result"]
+            response_data["recognition_method"] = recognition_result.get("method", "unknown")
             
-            # 如果识别出病害，自动生成防治建议
-            if recognition_result["analysis_result"]["disease_name"] != "健康状态":
-                disease_advice = f"检测到{recognition_result['analysis_result']['disease_name']}，" \
-                               f"建议：{recognition_result['analysis_result']['treatment_advice']}"
+            # 获取主要识别结果
+            primary_result = recognition_result["analysis_result"].get("primary_result", {})
+            disease_name = primary_result.get("disease_name", "未知")
+            confidence = primary_result.get("confidence", 0)
+            treatment = primary_result.get("treatment_advice", "请咨询专家")
+            
+            # 如果识别出病害且置信度足够高，自动生成防治建议
+            if disease_name not in ["健康状态", "健康", "healthy"] and confidence > 0.5:
+                disease_advice = f"AI识别结果：{disease_name}（置信度：{confidence:.2%}）。{treatment}"
                 
-                # 保存识别结果到决策记录
+                # 保存AI识别结果到决策记录
                 try:
                     save_decision_record(
                         crop_type=crop_type,
-                        growth_stage="图像识别",
+                        growth_stage="AI图像识别",
                         advice=disease_advice,
                         field_id=field_id
                     )
+                    response_data["auto_advice_saved"] = True
                 except Exception as e:
-                    print(f"保存识别结果失败: {e}")
+                    print(f"保存AI识别结果失败: {e}")
+                    response_data["auto_advice_saved"] = False
+            
+            # 添加识别摘要信息
+            response_data["recognition_summary"] = {
+                "disease_detected": disease_name,
+                "confidence": confidence,
+                "is_healthy": disease_name in ["健康状态", "健康", "healthy"],
+                "method_used": recognition_result.get("method", "unknown")
+            }
+        else:
+            # AI识别失败时的处理
+            if recognition_result:
+                response_data["recognition_error"] = recognition_result.get("message", "识别失败")
+            else:
+                response_data["recognition_error"] = "AI识别模块不可用"
 
         return jsonify(response_data)
     except Exception as e:
@@ -623,6 +648,145 @@ def api_generate_demo_data():
         }), 500
 
 
+@app.route('/api/analyze_image', methods=['POST'])
+def api_analyze_image():
+    """专门的图像识别API端点"""
+    try:
+        # 检查是否有上传的文件
+        if 'image' not in request.files:
+            return jsonify({"status": "error", "message": "请上传图片文件"}), 400
+
+        file = request.files['image']
+        if file.filename == '':
+            return jsonify({"status": "error", "message": "文件名不能为空"}), 400
+
+        if not allowed_file(file.filename):
+            return jsonify({"status": "error", "message": "不支持的文件类型"}), 400
+
+        # 获取可选参数
+        crop_type = request.form.get('crop_type', '')
+        field_id = request.form.get('field_id', type=int)
+
+        # 如果提供了field_id，尝试获取作物类型
+        if field_id and not crop_type:
+            try:
+                conn = get_connection()
+                try:
+                    with conn.cursor() as cursor:
+                        cursor.execute("SELECT crop_type FROM fields WHERE id = %s", (field_id,))
+                        field = cursor.fetchone()
+                        if field:
+                            crop_type = field.get('crop_type', '')
+                finally:
+                    conn.close()
+            except Exception as e:
+                print(f"获取地块信息失败: {e}")
+
+        # 保存临时文件
+        upload_folder = app.config.get('UPLOAD_FOLDER')
+        os.makedirs(upload_folder, exist_ok=True)
+        
+        timestamp = datetime.now().strftime('%Y%m%d%H%M%S')
+        safe_name = secure_filename(file.filename)
+        temp_filename = f"temp_{timestamp}_{safe_name}"
+        temp_path = os.path.join(upload_folder, temp_filename)
+        file.save(temp_path)
+
+        try:
+            # 进行AI图像识别
+            from image_recognition import analyze_crop_image
+            recognition_result = analyze_crop_image(temp_path, crop_type)
+            
+            # 清理临时文件
+            if os.path.exists(temp_path):
+                os.remove(temp_path)
+            
+            if recognition_result.get('status') == 'success':
+                return jsonify({
+                    "status": "success",
+                    "crop_type": crop_type,
+                    "recognition_result": recognition_result["analysis_result"],
+                    "method": recognition_result.get("method", "unknown"),
+                    "image_info": recognition_result.get("image_info", {})
+                })
+            else:
+                return jsonify({
+                    "status": "error",
+                    "message": recognition_result.get("message", "识别失败")
+                }), 500
+                
+        except ImportError:
+            return jsonify({
+                "status": "error",
+                "message": "AI图像识别模块不可用，请安装相关依赖"
+            }), 500
+        except Exception as e:
+            # 清理临时文件
+            if os.path.exists(temp_path):
+                os.remove(temp_path)
+            return jsonify({
+                "status": "error",
+                "message": f"图像识别失败: {str(e)}"
+            }), 500
+
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+
+@app.route('/api/get_supported_diseases', methods=['GET'])
+def api_get_supported_diseases():
+    """获取支持识别的病害列表"""
+    try:
+        from image_recognition import get_plant_classifier
+        classifier = get_plant_classifier()
+        
+        if classifier.available:
+            diseases = classifier.get_supported_diseases()
+            return jsonify({
+                "status": "success",
+                "supported_diseases": diseases,
+                "total_count": len(diseases),
+                "ai_available": True
+            })
+        else:
+            return jsonify({
+                "status": "success",
+                "supported_diseases": ["基础规则识别"],
+                "total_count": 1,
+                "ai_available": False,
+                "message": "AI模块不可用，使用基础识别"
+            })
+            
+    except Exception as e:
+        return jsonify({
+            "status": "error",
+            "message": str(e)
+        }), 500
+
+
 if __name__ == '__main__':
+    print("🌾 CropPilot 智能农业决策支持系统启动中...")
+    print("📊 功能模块:")
+    print("  ✅ 基础决策引擎")
+    print("  ✅ 智能知识库检索")
+    print("  ✅ 传感器数据管理")
+    print("  ✅ 数据可视化")
+    print("  ✅ 异常检测预警")
+    
+    # 检查AI图像识别模块
+    try:
+        from image_recognition import get_plant_classifier
+        classifier = get_plant_classifier()
+        if classifier.available:
+            print("  ✅ AI图像识别 (深度学习)")
+            print(f"     - 设备: {classifier.device}")
+            print(f"     - 支持病害: {len(classifier.class_names)}种")
+        else:
+            print("  ⚠️  AI图像识别 (基础规则)")
+            print("     - 提示: 安装PyTorch获得完整AI功能")
+    except Exception as e:
+        print(f"  ❌ AI图像识别模块加载失败: {e}")
+    
+    print(f"\n🚀 服务启动: http://localhost:5000")
     app.run(debug=app.config['DEBUG'], port=5000, host='0.0.0.0')
 

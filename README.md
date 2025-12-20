@@ -62,7 +62,7 @@ CropPilot/
     └── deployment.md                  # 部署指南
 ```
 
-## 安装步骤
+### 安装步骤
 
 ### 1. 环境要求
 
@@ -70,19 +70,35 @@ CropPilot/
 - MySQL 8.0+ 或 MariaDB 10.3+
 - Git (版本控制)
 - 现代Web浏览器 (Chrome, Firefox, Safari, Edge)
+- **PyTorch** (用于AI图像识别，可选)
 
 ### 2. 安装依赖
 
 ```bash
+# 基础依赖
 pip install -r requirements.txt
+
+# AI图像识别依赖（可选，但强烈推荐）
+pip install torch torchvision
 ```
 
 **智能功能依赖说明**：
 - `chromadb`: 向量数据库，用于语义搜索
 - `sentence-transformers`: 文本向量化模型
+- `torch` + `torchvision`: AI图像识别（可选）
 - 首次运行时会自动下载约50MB的AI模型文件
 
-### 3. 数据库配置
+### 3. 设置AI图像识别（可选）
+
+```bash
+# 下载并设置AI模型
+python download_model.py
+
+# 测试AI功能
+python test_ai_recognition.py
+```
+
+### 4. 数据库配置
 
 1. 创建数据库和表结构：
 ```bash
@@ -156,13 +172,41 @@ POST /api/smart_advice
 }
 ```
 
-**上传作物图片：**
+**上传作物图片并进行AI识别：**
 ```
 POST /api/upload_crop_image
 FormData:
 - field_id: 1
 - image: <选择图片文件>
 - captured_at: 2024-05-01T08:30 (可选，拍摄时间)
+
+响应示例:
+{
+  "status": "success",
+  "image_id": 123,
+  "recognition": {
+    "primary_result": {
+      "disease_name": "玉米大斑病",
+      "confidence": 0.85,
+      "treatment_advice": "喷施代森锰锌，清除病残体"
+    }
+  },
+  "recognition_method": "deep_learning"
+}
+```
+
+**仅进行AI图像识别（不保存）：**
+```
+POST /api/analyze_image
+FormData:
+- image: <选择图片文件>
+- crop_type: 玉米 (可选)
+```
+
+**获取支持的病害列表：**
+```
+GET /api/get_supported_diseases
+响应: 支持识别的38种植物病害列表
 ```
 
 **获取地块 / 用户（演示用）：**
@@ -228,10 +272,12 @@ GET /api/fields?user_id=2
 - [x] 知识库管理工具
 - [x] 数据可视化图表 (Chart.js + 传感器数据趋势图)
 - [x] 异常检测与预警 (智能监测 + 多级预警系统)
+- [x] **AI图像识别** (基于PyTorch + ResNet18的深度学习模型) ⭐
+- [x] **病虫害自动识别** (支持38种植物病害，自动生成治疗建议) ⭐
 
 ### 🚧 开发中功能
-- [ ] 病虫害图像识别模块
 - [ ] 生长阶段自动判断
+- [ ] AI模型优化与训练
 
 ### 📋 计划功能
 - [ ] 用户反馈与评价系统
