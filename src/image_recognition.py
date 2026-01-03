@@ -123,21 +123,55 @@ class PlantDiseaseClassifier:
     def _load_model(self):
         """加载预训练模型"""
         try:
-            # 使用ResNet18作为基础模型
+            # 基于数据集质量分析，使用更稳定的ResNet18架构
+            # EfficientNet-B4在当前数据不平衡情况下容易过拟合
             self.model = models.resnet18(pretrained=True)
             
             # 修改最后一层以适应我们的类别数
             num_classes = len(self.class_names)
             self.model.fc = torch.nn.Linear(self.model.fc.in_features, num_classes)
+            print("使用ResNet18架构（更适合当前数据集）")
             
-            # 尝试加载我们训练好的权重
-            model_path = os.path.join(os.path.dirname(__file__), '..', 'models', 'plant_disease_model.pth')
+            # 尝试加载我们训练好的权重（如果有的话）
+            model_paths = [
+                os.path.join(os.path.dirname(__file__), '..', 'checkpoints', 'plant_disease_gpu', 'best_model.pth'),
+                os.path.join(os.path.dirname(__file__), '..', 'models', 'plant_disease_model.pth')
+            ]
             
-            if os.path.exists(model_path):
-                print(f"加载训练好的模型: {model_path}")
-                self.model.load_state_dict(torch.load(model_path, map_location=self.device))
-            else:
-                print("未找到训练好的模型，使用预训练的ResNet18")
+            model_loaded = False
+            for model_path in model_paths:
+                if os.path.exists(model_path):
+                    print(f"尝试加载训练好的模型: {model_path}")
+                    try:
+                        # 尝试加载完整的checkpoint
+                        checkpoint = torch.load(model_path, map_location=self.device)
+                        if isinstance(checkpoint, dict) and 'model_state_dict' in checkpoint:
+                            # 检查模型架构是否匹配
+                            try:
+                                self.model.load_state_dict(checkpoint['model_state_dict'])
+                                model_loaded = True
+                                print(f"✅ 成功加载训练好的模型")
+                                break
+                            except RuntimeError as e:
+                                print(f"⚠️ 模型架构不匹配，跳过: {e}")
+                                continue
+                        else:
+                            # 如果只是模型权重
+                            try:
+                                self.model.load_state_dict(checkpoint)
+                                model_loaded = True
+                                print(f"✅ 成功加载训练好的模型")
+                                break
+                            except RuntimeError as e:
+                                print(f"⚠️ 模型架构不匹配，跳过: {e}")
+                                continue
+                    except Exception as e:
+                        print(f"⚠️ 加载模型失败: {e}")
+                        continue
+            
+            if not model_loaded:
+                print("未找到兼容的训练模型，使用预训练的ResNet18")
+                print("建议：重新训练ResNet18模型以获得更好的性能")
                 # 如果没有训练好的模型，我们使用一个简化的方法
                 # 在实际应用中，您需要使用植物病害数据集训练模型
                 

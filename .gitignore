@@ -134,6 +134,15 @@ cache/
 *_analysis.md
 analysis_*.py
 report_*.py
+AI_Model_Analysis_Report.md
+
+# Test files and debugging
+test_*.py
+check_*.py
+verify_*.py
+debug_*.html
+*_test.py
+*_check.py
 
 # Test output files
 test_output/
