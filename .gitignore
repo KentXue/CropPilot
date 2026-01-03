@@ -144,6 +144,12 @@ debug_*.html
 *_test.py
 *_check.py
 
+# Removed test files (cleaned up)
+test_all_functions.py
+test_ai_recognition.py
+test_smart_*.py
+test_model_download.py
+
 # Test output files
 test_output/
 test_results/

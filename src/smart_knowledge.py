@@ -45,8 +45,39 @@ class SmartKnowledgeBase:
             return
             
         try:
-            # 初始化嵌入模型（轻量级，无需GPU）
-            self.model = SentenceTransformer('all-MiniLM-L6-v2')
+            # 尝试初始化嵌入模型（轻量级，无需GPU）
+            print("正在初始化文本嵌入模型...")
+            print("📥 首次使用需要从HuggingFace下载模型文件（约90MB）...")
+            
+            # 设置更长的超时时间用于模型下载
+            import socket
+            original_timeout = socket.getdefaulttimeout()
+            socket.setdefaulttimeout(60)  # 60秒超时，给下载更多时间
+            
+            try:
+                # 尝试使用镜像源加速下载（如果在中国）
+                import os
+                os.environ.setdefault('HF_ENDPOINT', 'https://hf-mirror.com')
+                
+                print("🔄 正在下载sentence-transformers模型...")
+                print("   模型: all-MiniLM-L6-v2 (轻量级文本嵌入模型)")
+                print("   大小: ~90MB")
+                print("   用途: 将文本转换为向量，实现智能语义搜索")
+                
+                self.model = SentenceTransformer('all-MiniLM-L6-v2')
+                print("✅ 嵌入模型下载并加载成功")
+                print("💾 模型已缓存到本地，下次启动将直接使用")
+            except Exception as model_error:
+                print(f"⚠️ 嵌入模型加载失败: {model_error}")
+                print("🔄 切换到离线模式...")
+                # 恢复超时设置
+                socket.setdefaulttimeout(original_timeout)
+                # 使用离线兜底方案
+                self._init_offline_mode()
+                return
+            finally:
+                # 恢复原始超时设置
+                socket.setdefaulttimeout(original_timeout)
             
             # 创建或连接本地向量数据库
             db_path = os.path.join(os.path.dirname(__file__), '..', 'vector_db')
@@ -63,11 +94,24 @@ class SmartKnowledgeBase:
                 self._initialize_knowledge_base()
                 
             self.available = True
-            print("智能知识库初始化成功")
+            print("✅ 智能知识库初始化成功")
             
         except Exception as e:
-            print(f"智能知识库初始化失败: {e}")
-            self.available = False
+            print(f"⚠️ 智能知识库初始化失败: {e}")
+            print("🔄 切换到离线模式...")
+            self._init_offline_mode()
+    
+    def _init_offline_mode(self):
+        """初始化离线模式（基于关键词匹配）"""
+        self.available = True
+        self.offline_mode = True
+        self.model = None
+        self.client = None
+        self.collection = None
+        
+        # 加载离线知识库
+        self.offline_knowledge = self._get_comprehensive_offline_knowledge()
+        print("✅ 离线模式初始化成功（基于关键词匹配）")
     
     def _should_reload_knowledge(self) -> bool:
         """检查是否需要重新加载知识库"""
@@ -168,6 +212,53 @@ class SmartKnowledgeBase:
             }
         ]
     
+    def _get_comprehensive_offline_knowledge(self) -> List[Dict[str, Any]]:
+        """扩展的离线知识库"""
+        return [
+            # 叶片问题
+            {
+                "keywords": ["叶子", "叶片", "发黄", "黄化", "变黄"],
+                "content": "叶片发黄的常见原因及处理方法：\n1. 缺氮：叶片从下往上发黄，施用氮肥\n2. 缺铁：新叶发黄，叶脉仍绿，喷施铁肥\n3. 病害：叶斑病、纹枯病等，使用杀菌剂\n4. 虫害：蚜虫、红蜘蛛等，使用杀虫剂\n5. 水分：过湿或过干，调节灌溉",
+                "crop": "通用",
+                "stage": "通用"
+            },
+            # 病虫害防治
+            {
+                "keywords": ["病虫害", "防治", "病害", "虫害", "治疗"],
+                "content": "病虫害综合防治策略：\n1. 预防为主：选用抗病品种，合理轮作\n2. 农业防治：清洁田园，合理施肥\n3. 生物防治：利用天敌，生物农药\n4. 化学防治：科学用药，轮换使用\n5. 监测预警：定期检查，及时发现",
+                "crop": "通用",
+                "stage": "通用"
+            },
+            # 高温干旱
+            {
+                "keywords": ["高温", "干旱", "缺水", "热害", "抗旱"],
+                "content": "高温干旱应对措施：\n1. 灌溉管理：及时补水，滴灌节水\n2. 遮阳降温：搭建遮阳网，减少蒸腾\n3. 叶面喷水：早晚喷水，降低叶温\n4. 覆盖保墒：秸秆覆盖，减少蒸发\n5. 抗旱剂：喷施抗旱剂，提高抗性",
+                "crop": "通用",
+                "stage": "通用"
+            },
+            # 施肥管理
+            {
+                "keywords": ["施肥", "肥料", "营养", "氮磷钾", "追肥"],
+                "content": "科学施肥指导：\n1. 基肥：有机肥为主，改良土壤\n2. 追肥：根据生长期需求分次施用\n3. 氮肥：促进茎叶生长，注意用量\n4. 磷肥：促进根系和花果发育\n5. 钾肥：提高抗性，改善品质",
+                "crop": "通用",
+                "stage": "通用"
+            },
+            # 水稻专用
+            {
+                "keywords": ["水稻", "稻田", "分蘖", "抽穗", "灌浆"],
+                "content": "水稻管理要点：\n1. 分蘖期：浅水勤灌，促进分蘖\n2. 拔节期：深水护苗，防止倒伏\n3. 抽穗期：保持水层，确保抽穗\n4. 灌浆期：干湿交替，提高品质\n5. 成熟期：适时断水，便于收获",
+                "crop": "水稻",
+                "stage": "通用"
+            },
+            # 玉米专用
+            {
+                "keywords": ["玉米", "拔节", "抽雄", "灌浆", "玉米田"],
+                "content": "玉米管理要点：\n1. 苗期：控水蹲苗，促进根系\n2. 拔节期：重施拔节肥，促进茎秆\n3. 抽雄期：保证水分，确保授粉\n4. 灌浆期：充足水肥，提高产量\n5. 成熟期：适时收获，确保品质",
+                "crop": "玉米",
+                "stage": "通用"
+            }
+        ]
+    
     def add_document(self, content: str, source: str, crop: str = "通用", stage: str = "通用"):
         """添加新的知识文档"""
         if not self.available:
@@ -202,6 +293,10 @@ class SmartKnowledgeBase:
         """智能查询相关知识"""
         if not self.available:
             return []
+        
+        # 检查是否为离线模式
+        if hasattr(self, 'offline_mode') and self.offline_mode:
+            return self._offline_query(question, crop_type, growth_stage, n_results)
             
         try:
             # 构造更具体的查询文本
@@ -245,7 +340,49 @@ class SmartKnowledgeBase:
             
         except Exception as e:
             print(f"智能查询失败: {e}")
-            return []
+            # 如果向量查询失败，回退到离线模式
+            return self._offline_query(question, crop_type, growth_stage, n_results)
+    
+    def _offline_query(self, question: str, crop_type: str = "", growth_stage: str = "", n_results: int = 3) -> List[Dict[str, Any]]:
+        """离线关键词匹配查询"""
+        question_lower = question.lower()
+        crop_lower = crop_type.lower()
+        
+        matched_results = []
+        
+        for knowledge in self.offline_knowledge:
+            score = 0
+            
+            # 关键词匹配
+            for keyword in knowledge["keywords"]:
+                if keyword in question_lower:
+                    score += 2
+            
+            # 作物匹配
+            if crop_lower and knowledge["crop"].lower() in [crop_lower, "通用"]:
+                score += 1
+            elif knowledge["crop"] == "通用":
+                score += 0.5
+            
+            if score > 0:
+                matched_results.append({
+                    "content": knowledge["content"],
+                    "source": "离线知识库",
+                    "crop": knowledge["crop"],
+                    "stage": knowledge["stage"],
+                    "relevance_score": min(score / 3, 1.0),  # 归一化到0-1
+                    "distance": 1 - min(score / 3, 1.0),
+                    "rank": 0
+                })
+        
+        # 按相关度排序
+        matched_results.sort(key=lambda x: x["relevance_score"], reverse=True)
+        
+        # 重新设置排名
+        for i, result in enumerate(matched_results[:n_results]):
+            result["rank"] = i + 1
+        
+        return matched_results[:n_results]
 
     
     def format_advice(self, snippets: List[Dict[str, Any]], question: str) -> str:

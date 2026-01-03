@@ -251,56 +251,6 @@ def api_get_sensor_data():
         }), 500
 
 
-@app.route('/api/get_history', methods=['GET'])
-def api_get_history():
-    """查询决策历史记录"""
-    try:
-        field_id = request.args.get('field_id', type=int)
-        crop = request.args.get('crop', None)
-        stage = request.args.get('stage', None)
-        limit = int(request.args.get('limit', 50))
-        
-        conn = get_connection()
-        try:
-            with conn.cursor() as cursor:
-                sql = "SELECT * FROM decision_records WHERE 1=1"
-                params = []
-
-                if field_id is not None:
-                    sql += " AND field_id = %s"
-                    params.append(field_id)
-                if crop:
-                    sql += " AND crop_type = %s"
-                    params.append(crop)
-                if stage:
-                    sql += " AND growth_stage = %s"
-                    params.append(stage)
-                
-                sql += " ORDER BY created_at DESC LIMIT %s"
-                params.append(limit)
-                
-                cursor.execute(sql, params)
-                records = cursor.fetchall()
-                
-                # 转换datetime对象为字符串
-                for record in records:
-                    if 'created_at' in record and record['created_at']:
-                        record['created_at'] = record['created_at'].strftime('%Y-%m-%d %H:%M:%S')
-                
-                return jsonify({
-                    "status": "success",
-                    "count": len(records),
-                    "records": records
-                })
-        finally:
-            conn.close()
-    except Exception as e:
-        return jsonify({
-            "status": "error",
-            "message": str(e)
-        }), 500
-
-
 def save_decision_record(crop_type, growth_stage, advice, sensor_data_id=None, field_id=None):
     """保存决策记录到数据库"""
     try:

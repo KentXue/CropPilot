@@ -562,8 +562,13 @@
     
     /* 强制浅色模式文字颜色 */
     @media (prefers-color-scheme: light), (prefers-color-scheme: no-preference) {
-      h1, h2, h3, h4, h5, h6 {
+      h2, h3, h4, h5, h6 {
         color: #797979 !important;
+      }
+      
+      /* 保持header中的h1为白色 */
+      .header h1 {
+        color: var(--text-light) !important;
       }
       
       label {
@@ -899,8 +904,13 @@
   <!-- 简化的文字颜色修复 -->
   <style>
     /* 确保文字颜色统一 */
-    h1, h2, h3, h4, h5, h6 {
+    h2, h3, h4, h5, h6 {
       color: var(--text-primary) !important;
+    }
+    
+    /* 保持h1标题为白色 */
+    h1 {
+      color: var(--text-light) !important;
     }
     
     label {
@@ -950,7 +960,6 @@
         <button class="tab" onclick="switchTab('sensor')">📊 传感器数据</button>
         <button class="tab" onclick="switchTab('charts')">📈 数据可视化</button>
         <button class="tab" onclick="switchTab('alerts')">🚨 异常预警</button>
-        <button class="tab" onclick="switchTab('history')">📜 历史记录</button>
       </div>
 
     <!-- 农事建议标签页 -->
@@ -1303,41 +1312,6 @@
       </div>
     </div>
 
-    <!-- 历史记录标签页 -->
-    <div id="history-tab" class="tab-content">
-      <div class="section">
-        <h2>📜 查询历史记录</h2>
-        <div class="form-group">
-          <label>地块：</label>
-          <select id="historyFieldSelect">
-            <option value="">全部</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label>作物类型：</label>
-          <select id="historyCropSelect">
-            <option value="">全部</option>
-            <option value="水稻">水稻</option>
-            <option value="玉米">玉米</option>
-          </select>
-          
-          <label>生长阶段：</label>
-          <select id="historyStageSelect">
-            <option value="">全部</option>
-            <option value="分蘖期">分蘖期</option>
-            <option value="拔节期">拔节期</option>
-            <option value="抽穗期">抽穗期</option>
-            <option value="抽穗扬花期">抽穗扬花期</option>
-          </select>
-          
-          <button onclick="loadHistory()">查询历史</button>
-        </div>
-        
-        <div id="historyResult" class="result-box">
-          <p style="color: #333;">历史记录将显示在这里...</p>
-        </div>
-      </div>
-    </div>
   </div>
 
   <script>
@@ -1387,7 +1361,7 @@
         .then(data => {
           if (data.status !== 'success') return;
           fieldsCache = data.fields || [];
-          const fieldSelectIds = ['fieldSelect', 'sensorFieldSelect', 'historyFieldSelect', 'smartFieldSelect', 'chartFieldSelect', 'alertFieldSelect'];
+          const fieldSelectIds = ['fieldSelect', 'sensorFieldSelect', 'smartFieldSelect', 'chartFieldSelect', 'alertFieldSelect'];
           fieldSelectIds.forEach(id => {
             const sel = document.getElementById(id);
             if (!sel) return;
@@ -1540,49 +1514,6 @@
       // 先保存数据，然后直接获取当前作物+阶段的建议
       saveSensorData();
       getAdvice();
-    }
-
-    function loadHistory() {
-      const fieldId = document.getElementById('historyFieldSelect').value;
-      const crop = document.getElementById('historyCropSelect').value;
-      const stage = document.getElementById('historyStageSelect').value;
-      
-      let url = '/api/get_history';
-      const params = new URLSearchParams();
-      if (fieldId) params.append('field_id', fieldId);
-      if (crop) params.append('crop', crop);
-      if (stage) params.append('stage', stage);
-      if (params.toString()) url += '?' + params.toString();
-      
-      document.getElementById('historyResult').innerHTML = '<p>正在加载...</p>';
-      
-      fetch(url)
-        .then(response => response.json())
-        .then(data => {
-          if (data.status === 'success') {
-            let html = '<h3>决策记录 (' + data.count + ' 条)</h3>';
-            if (data.records && data.records.length > 0) {
-              data.records.forEach(record => {
-                html += `<div class="advice-item" style="margin-bottom: 15px;">`;
-                html += `<p><strong>${record.crop_type} - ${record.growth_stage}</strong></p>`;
-                html += `<p>${record.advice}</p>`;
-                html += `<p style="color: #333; font-size: 12px;">${record.created_at}</p>`;
-                html += `</div>`;
-              });
-            } else {
-              html += '<p>暂无历史记录</p>';
-            }
-            document.getElementById('historyResult').innerHTML = html;
-          } else {
-            document.getElementById('historyResult').innerHTML = 
-              '<div class="error">查询失败</div>';
-          }
-        })
-        .catch(error => {
-          console.error('错误:', error);
-          document.getElementById('historyResult').innerHTML = 
-            '<div class="error">请求失败</div>';
-        });
     }
 
     // 选地块时自动带出作物类型

@@ -1,108 +1,95 @@
-# 快速开始指南
+# 🚀 CropPilot 快速启动指南
 
-## 5分钟快速启动
+## 📋 系统要求
 
-### 步骤 1: 安装依赖
+- Python 3.8+
+- MySQL 8.0+
+- 4GB+ RAM
+- CUDA GPU（可选，用于AI加速）
 
+## ⚡ 5分钟快速启动
+
+### 1. 克隆项目
 ```bash
+git clone <repository-url>
+cd CropPilot
+```
+
+### 2. 安装依赖
+```bash
+# 创建虚拟环境
+python -m venv .venv
+
+# 激活虚拟环境
+# Windows:
+.venv\Scripts\activate
+# Linux/Mac:
+source .venv/bin/activate
+
+# 安装依赖
 pip install -r requirements.txt
 ```
 
-**注意**: 首次安装会下载AI模型文件（约50MB），需要网络连接。
-
-### 步骤 2: 配置数据库
-
-1. 确保 MySQL 服务正在运行
-
-2. 创建数据库和表：
+### 3. 配置数据库
 ```bash
-mysql -u root -p < sql/schema.sql
+# 登录MySQL
+mysql -u root -p
+
+# 创建数据库
+CREATE DATABASE crop_pilot;
+exit
+
+# 导入数据结构和示例数据
+mysql -u root -p crop_pilot < sql/schema.sql
+mysql -u root -p crop_pilot < sql/seed_data.sql
 ```
 
-3. 导入初始数据：
+### 4. 配置环境变量
 ```bash
-mysql -u root -p crop_pilot_db < sql/seed_data.sql
-```
-
-### 步骤 3: 配置环境变量
-
-复制环境变量示例文件：
-```bash
-# Windows
-copy env.example .env
-
-# Linux/Mac
+# 复制配置文件
 cp env.example .env
+
+# 编辑.env文件，修改数据库密码
+# DB_PASSWORD=your_mysql_password
 ```
 
-编辑 `.env` 文件，修改数据库密码：
-```env
-DB_PASSWORD=your_actual_password
-```
-
-### 步骤 4: 启动应用
-
+### 5. 启动系统
 ```bash
 python src/app.py
 ```
 
-### 步骤 5: 访问应用
+### 6. 访问系统
+打开浏览器访问：http://localhost:5000
 
-打开浏览器访问：`http://localhost:5000`
+## 🎯 首次使用
 
-## 智能功能测试
+1. **选择用户**：页面顶部选择"farmer_zhang"
+2. **选择地块**：选择"张三水稻田1号"
+3. **录入数据**：在"传感器数据"标签页录入环境数据
+4. **查看图表**：在"数据可视化"标签页查看趋势
+5. **智能咨询**：在"智能咨询"标签页问"叶子发黄怎么办"
 
-### 测试知识库功能
-```bash
-# 测试智能知识库和图像识别
-python test_smart_features.py
+## 🔧 常见问题
 
-# 测试不同数据源
-python test_knowledge_sources.py
+### Q: 启动时提示数据库连接失败？
+A: 检查MySQL服务是否启动，.env文件中的数据库密码是否正确
 
-# 测试异常检测功能
-python test_anomaly_detection.py
-```
+### Q: 智能咨询功能加载很慢？
+A: 首次使用需要下载AI模型（约90MB），请耐心等待
 
-### 管理知识库
-```bash
-# 交互式知识管理
-python manage_knowledge.py
+### Q: AI图像识别不工作？
+A: 确保安装了PyTorch：`pip install torch torchvision`
 
-# 演示知识管理
-python demo_knowledge_management.py
+### Q: 图表不显示数据？
+A: 先在"传感器数据"标签页录入一些数据
 
-# 重置向量数据库
-python reset_knowledge_db.py
-```
+## 📞 获取帮助
 
-## 常见问题
+- 查看完整文档：README.md
+- 系统架构：docs/system_architecture.md
+- API文档：docs/api.md
+- 项目状态：PROJECT_STATUS.md
 
-**Q: 数据库连接失败？**  
-A: 检查 `.env` 文件中的数据库配置是否正确，确保 MySQL 服务正在运行。
+---
 
-**Q: 智能知识库不可用？**  
-A: 确保已安装 `chromadb` 和 `sentence-transformers`：
-```bash
-pip install chromadb sentence-transformers
-```
-
-**Q: 模块导入错误？**  
-A: 确保从项目根目录运行 `python src/app.py`，而不是从 `src` 目录内运行。
-
-**Q: 端口被占用？**  
-A: 修改 `src/app.py` 最后一行的端口号。
-
-**Q: 向量数据库初始化失败？**  
-A: 运行重置脚本：
-```bash
-python reset_knowledge_db.py
-```
-
-## 下一步
-
-- 查看 [API文档](docs/api.md) 了解所有接口
-- 查看 [数据库设计](docs/database.md) 了解数据结构
-- 查看 [部署指南](docs/deployment.md) 了解生产环境部署
-- 尝试智能咨询功能：访问主页面，使用自然语言提问
-
+**开始您的智能农业之旅！** 🌾
