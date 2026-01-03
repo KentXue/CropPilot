@@ -90,3 +90,83 @@ htmlcov/
 # pyenv
 .python-version
 
+# AI/ML Models and Training
+models/
+checkpoints/
+*.pth
+*.pt
+*.ckpt
+*.h5
+*.pkl
+*.joblib
+*.model
+
+# Vector Database
+vector_db/
+*.sqlite3
+chroma.sqlite3
+
+# Training logs and outputs
+*.log
+training_logs/
+runs/
+wandb/
+tensorboard_logs/
+
+# Dataset files (large data files)
+datasets/
+data/raw/
+data/processed/
+*.csv
+*.json.bak
+*.parquet
+
+# Temporary files and caches
+temp/
+tmp/
+cache/
+.cache/
+*.tmp
+*.temp
+
+# Generated reports and analysis files
+*_report.md
+*_analysis.md
+analysis_*.py
+report_*.py
+
+# Test output files
+test_output/
+test_results/
+*.test.log
+
+# Uploaded files (keep .gitkeep)
+static/uploads/*
+!static/uploads/.gitkeep
+
+# Configuration backups
+*.config.bak
+*.json.backup
+gpu_training_config.json.bak
+
+# HTML preview files (temporary)
+*_preview.html
+simple_colors_preview.html
+test_*.html
+color_*.html
+
+# Jupyter notebook outputs
+*.ipynb
+
+# Large binary files
+*.bin
+*.dat
+*.npy
+*.npz
+
+# OS and editor specific
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~

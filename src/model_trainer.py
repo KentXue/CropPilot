@@ -237,8 +237,29 @@ class ModelTrainer:
         """设置设备"""
         if self.config.device == 'auto':
             if torch.cuda.is_available():
-                device = torch.device('cuda')
-                logger.info(f"使用GPU: {torch.cuda.get_device_name()}")
+                # 检查是否有多个GPU，优先选择RTX显卡
+                gpu_count = torch.cuda.device_count()
+                best_gpu = 0
+                
+                if gpu_count > 1:
+                    # 寻找最适合训练的GPU（通常是独立显卡）
+                    for i in range(gpu_count):
+                        gpu_name = torch.cuda.get_device_name(i)
+                        # RTX、GTX等独立显卡优先
+                        if any(keyword in gpu_name.upper() for keyword in ['RTX', 'GTX', 'TESLA', 'QUADRO']):
+                            best_gpu = i
+                            break
+                
+                device = torch.device(f'cuda:{best_gpu}')
+                logger.info(f"使用GPU {best_gpu}: {torch.cuda.get_device_name(best_gpu)}")
+                
+                # 显示所有可用GPU
+                if gpu_count > 1:
+                    logger.info(f"检测到 {gpu_count} 个GPU:")
+                    for i in range(gpu_count):
+                        gpu_name = torch.cuda.get_device_name(i)
+                        status = "✅ 已选择" if i == best_gpu else "⚪ 可用"
+                        logger.info(f"  GPU {i}: {gpu_name} {status}")
             else:
                 device = torch.device('cpu')
                 logger.info("使用CPU")

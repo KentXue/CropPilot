@@ -549,8 +549,23 @@ class ModelEvaluator:
         
         # 保存指标
         metrics_dict = asdict(metrics)
+        # 确保所有值都是JSON可序列化的
+        def clean_dict(d):
+            if isinstance(d, dict):
+                return {k: clean_dict(v) for k, v in d.items()}
+            elif isinstance(d, (np.integer, np.int64, np.int32)):
+                return int(d)
+            elif isinstance(d, (np.floating, np.float64, np.float32)):
+                return float(d)
+            elif hasattr(d, 'item'):
+                return d.item()
+            else:
+                return d
+        
+        metrics_dict = clean_dict(metrics_dict)
+        
         with open(save_dir / f'{model_name}_metrics.json', 'w') as f:
-            json.dump(metrics_dict, f, indent=2)
+            json.dump(metrics_dict, f, indent=2, default=self._json_serializer)
         
         # 保存分类报告
         if self.last_predictions is not None:
@@ -561,9 +576,21 @@ class ModelEvaluator:
         # 保存类别指标
         if self.last_predictions is not None:
             class_metrics = self.get_class_metrics()
-            class_metrics_dict = [asdict(cm) for cm in class_metrics]
+            class_metrics_dict = []
+            for cm in class_metrics:
+                cm_dict = asdict(cm)
+                # 转换numpy类型为Python原生类型
+                for key, value in cm_dict.items():
+                    if hasattr(value, 'item'):
+                        cm_dict[key] = value.item()
+                    elif isinstance(value, (np.integer, np.int64, np.int32)):
+                        cm_dict[key] = int(value)
+                    elif isinstance(value, (np.floating, np.float64, np.float32)):
+                        cm_dict[key] = float(value)
+                class_metrics_dict.append(cm_dict)
+            
             with open(save_dir / f'{model_name}_class_metrics.json', 'w') as f:
-                json.dump(class_metrics_dict, f, indent=2)
+                json.dump(class_metrics_dict, f, indent=2, default=self._json_serializer)
         
         # 绘制并保存图表
         if self.last_predictions is not None:
@@ -572,6 +599,18 @@ class ModelEvaluator:
             self.plot_precision_recall_curves(save_path=save_dir / f'{model_name}_pr_curves.png')
         
         logger.info(f"评估报告已保存到: {save_dir}")
+    
+    def _json_serializer(self, obj):
+        """JSON序列化辅助方法，处理numpy类型"""
+        if isinstance(obj, (np.integer, np.int64, np.int32)):
+            return int(obj)
+        elif isinstance(obj, (np.floating, np.float64, np.float32)):
+            return float(obj)
+        elif isinstance(obj, np.ndarray):
+            return obj.tolist()
+        elif hasattr(obj, 'item'):
+            return obj.item()
+        raise TypeError(f'Object of type {type(obj)} is not JSON serializable')
 
 # 便捷函数
 def create_evaluator(class_names: Optional[List[str]] = None, 
